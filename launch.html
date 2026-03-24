@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>啟動血脂管理決策系統 - 第二階段測試版</title>
+    <title>啟動血脂管理決策系統</title>
     
     <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.6.0/build/fhir-client.js"></script>
     
@@ -16,68 +16,42 @@
             align-items: center;
             height: 100vh;
             background-color: #f8f9fa;
-            margin: 0;
         }
         .loader {
             text-align: center;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            border-left-color: #0d6efd;
+            border-left-color: #09d;
             animation: spin 1s linear infinite;
             display: inline-block;
-            margin-bottom: 15px;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-        .status-text {
-            color: #495057;
-            font-weight: 500;
         }
     </style>
 </head>
 <body>
     <div class="loader">
         <div class="spinner"></div>
-        <div class="status-text">正在連接私有 Launcher 並進行安全認證...</div>
-        <div style="font-size: 12px; color: #6c757d; margin-top: 10px;">請勿關閉視窗</div>
+        <p>正在透過醫學中心 EHR 安全認證中...</p>
     </div>
 
     <script>
         /**
-         * 臺灣 50 優良 SMART App 徵案 - 第二階段測試配置
-         * 模式：EHR Launch / Standalone Launch
+         * SMART on FHIR 啟動配置（已依照第二階段測試 PDF 調整）
+         * 使用官方提供的 client_id 與 client_secret
          */
         FHIR.oauth2.authorize({
-            // 1. 大會提供之測試專用 Client ID
-            clientId: "cc344727-6f90-496c-94fd-c7829aa9a51d", 
-
-            // 2. 大會提供之測試專用 Client Secret
-            // 注意：正式產品化時 Secret 不應置於前端，此處僅供測試環境整合使用
+            clientId: "cc344727-6f90-496c-94fd-c7829aa9a51d",
             clientSecret: "79f04b56b33491716c0880af72cdef7d3f0629111421cedd18353651cd313d9e",
-
-            // 3. 權限範圍 (Scopes)
-            // launch: 獲取 EHR 上下文
-            // openid/fhirUser: 使用者身分驗證
-            // patient/*.read: 讀取該病人之基本資料、檢驗值(LDL)、診斷(Conditions)
-            scope: "launch openid fhirUser patient/Patient.read patient/Observation.read patient/Condition.read", 
-
-            // 4. Redirect URI
-            // 授權後跳轉回您的應用程式主頁面，需與您提供給大會的資訊一致
+            scope: "launch openid fhirUser patient/*.read",
             redirectUri: "index.html",
-
-            // 5. 資安配置
-            // 針對單頁應用 (SPA) 建議開啟，以符合醫療資料傳輸安全規範
-            pkceMode: "unsafe-fallback" 
+            pkceMode: "unsafe-fallback"   // 相容舊版 EMR 環境
         });
     </script>
 </body>
