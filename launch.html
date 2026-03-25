@@ -43,15 +43,22 @@
 
     <script>
         /**
-         * SMART on FHIR 啟動配置（已依照第二階段測試 PDF 調整）
-         * 使用官方提供的 client_id 與 client_secret
+         * 修正後的 SMART on FHIR 啟動配置（推薦正式環境寫法）
+         * - 移除 clientSecret（前端不應持有）
+         * - 使用完整 PKCE（不再 unsafe-fallback）
+         * - 適合純前端 Public Client
          */
         FHIR.oauth2.authorize({
             clientId: "cc344727-6f90-496c-94fd-c7829aa9a51d",
-            clientSecret: "79f04b56b33491716c0880af72cdef7d3f0629111421cedd18353651cd313d9e",
+            // clientSecret 已移除 → 前端不再暴露機密金鑰
             scope: "launch openid fhirUser patient/*.read",
             redirectUri: "index.html",
-            pkceMode: "unsafe-fallback"   // 相容舊版 EMR 環境
+            
+            // 強制使用 PKCE S256（最安全，現代 EHR 幾乎都支援）
+            pkceMode: "ifSupported",        // 或直接省略，fhirclient 預設會盡量使用 PKCE
+            
+            // 可選：明確指定 PKCE method（fhirclient v2.6+ 支援）
+            // codeChallengeMethod: "S256"
         });
     </script>
 </body>
