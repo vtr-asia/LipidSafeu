@@ -2,64 +2,99 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>啟動血脂管理決策系統</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.6.0/build/fhir-client.js"></script>
-    
+    <title>啟動 - 脂安通 Lipid-Safe Connect</title>
+    <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.6.3/build/fhir-client.js"></script>
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+            color: white;
         }
-        .loader {
-            text-align: center;
+        .card {
+            text-align: center; padding: 48px 40px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 20px; backdrop-filter: blur(12px);
+            max-width: 440px; width: 90%;
         }
+        .logo { font-size: 40px; margin-bottom: 12px; }
+        h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; color: #e0f2fe; }
+        .sub { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 32px; }
         .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            width: 36px;
-            height: 36px;
+            width: 44px; height: 44px; margin: 0 auto 20px;
+            border: 4px solid rgba(255,255,255,0.15);
+            border-top-color: #38bdf8;
             border-radius: 50%;
-            border-left-color: #09d;
-            animation: spin 1s linear infinite;
-            display: inline-block;
+            animation: spin 0.9s linear infinite;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .status { font-size: 14px; color: rgba(255,255,255,0.6); min-height: 20px; }
+        .error-box {
+            display: none; margin-top: 24px;
+            background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4);
+            border-radius: 12px; padding: 16px 18px;
+            color: #fca5a5; font-size: 13px; line-height: 1.7; text-align: left;
+        }
+        .error-box a { color: #93c5fd; }
+        .iss-box {
+            margin-top: 16px; padding: 10px 14px;
+            background: rgba(255,255,255,0.06); border-radius: 8px;
+            font-size: 12px; color: rgba(255,255,255,0.4);
+            word-break: break-all; text-align: left;
         }
     </style>
 </head>
 <body>
-    <div class="loader">
-        <div class="spinner"></div>
-        <p>正在透過醫學中心 EHR 安全認證中...</p>
+    <div class="card">
+        <div class="logo">🩸</div>
+        <h1>脂安通 Lipid-Safe Connect</h1>
+        <p class="sub">血脂 CDS 臨床決策支援系統</p>
+
+        <div class="spinner" id="spinner"></div>
+        <p class="status" id="statusMsg">正在讀取 SMART Health IT 授權端點...</p>
+        <div class="iss-box" id="issBox" style="display:none;"></div>
+        <div class="error-box" id="errorBox"></div>
     </div>
 
     <script>
-        /**
-         * 修正後的 SMART on FHIR 啟動配置（推薦正式環境寫法）
-         * - 移除 clientSecret（前端不應持有）
-         * - 使用完整 PKCE（不再 unsafe-fallback）
-         * - 適合純前端 Public Client
-         */
-        FHIR.oauth2.authorize({
-            clientId: "cc344727-6f90-496c-94fd-c7829aa9a51d",
-            // clientSecret 已移除 → 前端不再暴露機密金鑰
-            scope: "launch openid fhirUser patient/*.read",
-            redirectUri: "index.html",
-            
-            // 強制使用 PKCE S256（最安全，現代 EHR 幾乎都支援）
-            pkceMode: "ifSupported",        // 或直接省略，fhirclient 預設會盡量使用 PKCE
-            
-            // 可選：明確指定 PKCE method（fhirclient v2.6+ 支援）
-            // codeChallengeMethod: "S256"
-        });
+        function showError(html) {
+            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('statusMsg').textContent = '授權失敗';
+            const box = document.getElementById('errorBox');
+            box.style.display = 'block';
+            box.innerHTML = html;
+        }
+
+        // ✅ 修復：從 URL 讀取 SMART Health IT launcher 注入的 iss 參數
+        const params = new URLSearchParams(window.location.search);
+        const iss    = params.get('iss');
+
+        if (!iss) {
+            showError(
+                '❌ 缺少 <code>iss</code> 參數。<br><br>' +
+                '請從 <a href="https://launch.smarthealthit.org/" target="_blank">https://launch.smarthealthit.org/</a> ' +
+                '選擇「Provider EHR Launch」→ 選定病人 → 填入本頁網址後啟動。<br><br>' +
+                '不可直接在瀏覽器開啟此頁面。'
+            );
+        } else {
+            document.getElementById('issBox').style.display = 'block';
+            document.getElementById('issBox').textContent = 'FHIR Server: ' + iss;
+            document.getElementById('statusMsg').textContent = '正在取得 OAuth 2.0 授權...';
+
+            FHIR.oauth2.authorize({
+                iss:         iss,                  // ✅ 動態傳入 launcher 提供的 server
+                clientId:    "lipid_safe_connect",  // public client，sandbox 接受任意 clientId
+                scope:       "launch openid fhirUser patient/*.read",
+                redirectUri: "index.html",          // 相對路徑，避免 file:// 問題
+                pkceMode:    "ifSupported"
+            }).catch(err => {
+                showError('❌ 授權失敗：<br>' + (err.message || JSON.stringify(err)));
+            });
+        }
     </script>
 </body>
 </html>

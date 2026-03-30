@@ -1,338 +1,615 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <title>2025 血脂管理決策系統 - THAS 版</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-        .clickable-row { cursor: pointer; }
-        .clickable-row:hover { background-color: #f8f9fa; }
-        .risk-tag { width: 110px; text-align: center; }
-        #loading-status { color: blue; font-weight: bold; }
-        .detail-section { margin-bottom: 1.5rem; }
-        .medication-item { font-size: 0.9rem; }
-        #ldl-chart { max-height: 250px; margin-top: 1rem; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🩸 脂安通 Lipid-Safe Connect</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.6.3/build/fhir-client.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --ink:      #0d1117;
+      --ink2:     #1c2433;
+      --surface:  #f4f6fb;
+      --white:    #ffffff;
+      --border:   #dde3ef;
+      --dim:      #7a8899;
+      --blue:     #2563eb;
+      --blue-lt:  #dbeafe;
+      --teal:     #0d9488;
+      --teal-lt:  #ccfbf1;
+      --red:      #dc2626;
+      --red-lt:   #fee2e2;
+      --amber:    #d97706;
+      --amber-lt: #fef3c7;
+      --green:    #059669;
+      --green-lt: #d1fae5;
+      --radius:   14px;
+      --shadow:   0 2px 16px rgba(0,0,0,0.07);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
+      background: var(--surface);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── TOP NAV ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 58px;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; }
+    .nav-icon { font-size: 22px; }
+    .nav-name { font-weight: 700; font-size: 17px; color: var(--blue); letter-spacing: -0.3px; }
+    .nav-tag  { font-size: 11px; background: var(--blue-lt); color: var(--blue); padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+    .nav-sync { font-size: 12px; color: var(--dim); display: flex; align-items: center; gap: 6px; }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); transition: background 0.4s; }
+    .sync-dot.ok   { background: var(--green); box-shadow: 0 0 0 3px var(--green-lt); }
+    .sync-dot.fail { background: var(--red); }
+
+    /* ── LAYOUT ── */
+    .page { max-width: 1260px; margin: 0 auto; padding: 24px 24px 60px; }
+
+    /* ── PATIENT STRIP ── */
+    .pt-strip {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 24px;
+      display: flex; align-items: center; gap: 18px;
+      margin-bottom: 24px; box-shadow: var(--shadow);
+      animation: fadeUp 0.4s ease both;
+    }
+    .pt-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0; color: white;
+    }
+    .pt-name  { font-size: 19px; font-weight: 700; color: var(--ink); }
+    .pt-meta  { font-size: 13px; color: var(--dim); margin-top: 1px; }
+    .pt-badge {
+      margin-left: auto; font-family: 'DM Mono', monospace;
+      font-size: 12px; color: var(--dim);
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 4px 10px; border-radius: 8px;
+    }
+
+    /* ── MAIN GRID ── */
+    .grid-main {
+      display: grid;
+      grid-template-columns: 1fr 1fr 340px;
+      grid-template-rows: auto auto;
+      gap: 20px;
+    }
+    @media (max-width: 1100px) {
+      .grid-main { grid-template-columns: 1fr 1fr; }
+      .col-right  { grid-column: 1 / -1; }
+    }
+    @media (max-width: 700px) {
+      .grid-main { grid-template-columns: 1fr; }
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      box-shadow: var(--shadow);
+      animation: fadeUp 0.45s ease both;
+    }
+    .card-h {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--dim);
+      margin-bottom: 16px; display: flex; align-items: center; gap: 7px;
+    }
+    .card-h::before { content: ''; display: inline-block; width: 3px; height: 12px; border-radius: 2px; background: var(--blue); }
+
+    /* ── METRICS GRID ── */
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .metric {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 14px;
+      transition: border-color 0.2s;
+    }
+    .metric.alert { border-color: var(--red); background: var(--red-lt); }
+    .metric.warn  { border-color: var(--amber); background: var(--amber-lt); }
+    .metric.ok    { border-color: var(--teal); background: var(--teal-lt); }
+    .m-lbl { font-size: 11px; color: var(--dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .m-val {
+      font-size: 30px; font-weight: 800; color: var(--ink);
+      font-family: 'DM Mono', monospace; line-height: 1;
+    }
+    .m-val.alert { color: var(--red); }
+    .m-val.warn  { color: var(--amber); }
+    .m-val.ok    { color: var(--teal); }
+    .m-unit { font-size: 11px; color: var(--dim); margin-top: 3px; }
+
+    /* ── CDS ALERT ── */
+    .cds-panel {
+      border-radius: 12px; padding: 18px 20px; margin-bottom: 18px;
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .cds-panel.cds-safe   { background: var(--green-lt); border: 1.5px solid var(--green); }
+    .cds-panel.cds-warn   { background: var(--amber-lt); border: 1.5px solid var(--amber); }
+    .cds-panel.cds-alert  { background: var(--red-lt);   border: 1.5px solid var(--red);   }
+    .cds-icon { font-size: 26px; line-height: 1; flex-shrink: 0; }
+    .cds-title { font-weight: 700; font-size: 15px; margin-bottom: 3px; }
+    .cds-title.cds-safe  { color: var(--green); }
+    .cds-title.cds-warn  { color: var(--amber); }
+    .cds-title.cds-alert { color: var(--red);   }
+    .cds-body { font-size: 13px; color: var(--ink2); line-height: 1.6; }
+
+    /* ── ADVICE LIST ── */
+    .advice-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+    .advice-item {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 12px 14px; border-radius: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      font-size: 13px; line-height: 1.6;
+    }
+    .advice-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── HISTORY LIST ── */
+    .hist-list { list-style: none; display: flex; flex-direction: column; gap: 0; }
+    .hist-item {
+      padding: 11px 0; border-bottom: 1px solid var(--surface);
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .hist-item:last-child { border-bottom: none; }
+    .hist-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+    .hist-meta { font-size: 11px; color: var(--dim); display: flex; align-items: center; gap: 8px; }
+    .pill {
+      display: inline-block; padding: 1px 7px; border-radius: 20px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
+    }
+    .pill-blue   { background: var(--blue-lt); color: var(--blue); }
+    .pill-green  { background: var(--green-lt); color: var(--green); }
+    .pill-red    { background: var(--red-lt); color: var(--red); }
+    .pill-amber  { background: var(--amber-lt); color: var(--amber); }
+
+    /* ── WATER BOX ── */
+    .water-card {
+      margin-top: 16px;
+      background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+      border: 1px solid #bae6fd; border-radius: 12px;
+      padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .water-l  { font-size: 13px; font-weight: 700; color: #1d4ed8; }
+    .water-l small { display: block; font-weight: 400; font-size: 11px; color: #60a5fa; margin-top: 2px; }
+    .water-num { font-size: 36px; font-weight: 800; color: #2563eb; font-family: 'DM Mono', monospace; line-height: 1; }
+    .water-unit { font-size: 13px; font-weight: 700; color: #3b82f6; }
+
+    /* ── CHART CARD ── */
+    .chart-wrap { position: relative; height: 200px; margin-top: 8px; }
+
+    /* ── SKELETON ── */
+    .skel { background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: skel 1.4s ease infinite; border-radius: 6px; }
+    @keyframes skel { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* ── NO DATA ── */
+    .no-data { font-size: 12px; color: var(--dim); font-style: italic; padding: 8px 0; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: var(--ink); color: white; border-radius: 10px;
+      padding: 12px 18px; font-size: 13px; font-weight: 500;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      opacity: 0; transform: translateY(12px);
+      transition: all 0.3s ease; pointer-events: none; z-index: 999;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* stagger cards */
+    .card:nth-child(1) { animation-delay: 0.05s; }
+    .card:nth-child(2) { animation-delay: 0.10s; }
+    .card:nth-child(3) { animation-delay: 0.15s; }
+    .card:nth-child(4) { animation-delay: 0.20s; }
+    .card:nth-child(5) { animation-delay: 0.25s; }
+  </style>
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-lg-7">
-            <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <span>即時病患清單 (THAS FHIR Server)</span>
-                    <span id="loading-status">資料讀取中...</span>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>姓名</th>
-                                <th>風險等級</th>
-                                <th>最新 LDL-C</th>
-                                <th>目標值</th>
-                                <th>狀態</th>
-                            </tr>
-                        </thead>
-                        <tbody id="patient-list"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-5">
-            <div id="detail-pane" class="card shadow-sm p-4" style="display:none; min-height: 650px;">
-                <h3 id="det-name" class="text-primary fw-bold"></h3>
-                <hr>
-                <div class="detail-section">
-                    <h6><span class="badge bg-secondary mb-2">臨床診斷</span></h6>
-                    <p id="det-cond" class="small mb-0"></p>
-                </div>
-                
-                <div class="detail-section">
-                    <h6><span class="badge bg-primary mb-2">LDL-C 指標</span></h6>
-                    <div class="h4 mb-2">
-                        目前: <span id="det-ldl" class="text-danger fw-bold"></span> mg/dL 
-                        <small class="text-muted">/ 目標: <span id="det-target"></span> mg/dL</small>
-                    </div>
-                    
-                    <!-- 進度條：LDL-C 達成百分比 -->
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between small mb-1">
-                            <span>LDL-C 達成進度</span>
-                            <span id="progress-text"></span>
-                        </div>
-                        <div class="progress" style="height: 20px;">
-                            <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 柱狀圖：目前 vs 目標 -->
-                <div class="detail-section">
-                    <h6><span class="badge bg-info mb-2">LDL-C 差距圖</span></h6>
-                    <canvas id="ldl-chart"></canvas>
-                </div>
-                
-                <div class="detail-section">
-                    <h6><span class="badge bg-success mb-2">目前用藥清單</span></h6>
-                    <ul id="det-medications" class="list-group list-group-flush small"></ul>
-                </div>
-                
-                <div class="alert alert-info mt-3">
-                    <strong>2025 共識具體治療建議：</strong>
-                    <pre id="det-advice" class="mb-0 small" style="white-space: pre-wrap; font-family: inherit;"></pre>
-                </div>
-            </div>
-            <div id="placeholder" class="text-center mt-5 text-muted">
-                <h5>請點擊左側病人查看詳細病例與建議</h5>
-            </div>
-        </div>
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <span class="nav-icon">🩸</span>
+      <span class="nav-name">脂安通</span>
+      <span class="nav-tag">Lipid-Safe CDS</span>
     </div>
-</div>
+    <div class="nav-sync">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncTxt">連線中...</span>
+    </div>
+  </nav>
 
-<script>
-    const FHIR_BASE = "https://thas.mohw.gov.tw/v/r4/fhir";
-    
-    const patientIds = [
-        'liu-dong-cai-001',
-        'chen-wei-hua-002',
-        'chen-jun-da-003',
-        'tsai-xiu-li-004'
-    ];
-    
-    let patientDataStore = {};
-    let chartInstance = null; // 用來儲存 Chart.js 實例，避免重複建立
+  <div class="page">
 
-    function hasCondition(conditions, keywords) {
-        return conditions.some(cond => {
-            const text = (cond.code?.text || '').toLowerCase();
-            const coding = cond.code?.coding || [];
-            return keywords.some(kw => 
-                text.includes(kw.toLowerCase()) ||
-                coding.some(c => 
-                    (c.code || '').includes(kw) || 
-                    (c.display || '').toLowerCase().includes(kw.toLowerCase())
-                )
-            );
-        });
+    <!-- PATIENT STRIP -->
+    <div class="pt-strip">
+      <div class="pt-avatar">👤</div>
+      <div>
+        <div class="pt-name" id="pName">讀取中...</div>
+        <div class="pt-meta" id="pMeta">辨識中...</div>
+      </div>
+      <div class="pt-badge" id="pId">Patient ID: —</div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="grid-main">
+
+      <!-- COL 1: 脂質指標 -->
+      <div class="card">
+        <div class="card-h">🧪 臨床脂質 &amp; 代謝指標</div>
+        <div class="metrics">
+          <div class="metric" id="mLdl">
+            <div class="m-lbl">LDL-C 壞膽固醇</div>
+            <div class="m-val" id="vLdl">—</div>
+            <div class="m-unit">mg/dL</div>
+          </div>
+          <div class="metric" id="mTg">
+            <div class="m-lbl">三酸甘油脂 TG</div>
+            <div class="m-val" id="vTg">—</div>
+            <div class="m-unit">mg/dL</div>
+          </div>
+          <div class="metric" id="mTc">
+            <div class="m-lbl">總膽固醇 TC</div>
+            <div class="m-val" id="vTc">—</div>
+            <div class="m-unit">mg/dL</div>
+          </div>
+          <div class="metric" id="mHdl">
+            <div class="m-lbl">HDL-C 好膽固醇</div>
+            <div class="m-val" id="vHdl">—</div>
+            <div class="m-unit">mg/dL</div>
+          </div>
+          <div class="metric" id="mWt">
+            <div class="m-lbl">體重</div>
+            <div class="m-val" id="vWt">—</div>
+            <div class="m-unit">kg</div>
+          </div>
+          <div class="metric" id="mWai">
+            <div class="m-lbl">腰圍</div>
+            <div class="m-val" id="vWai">—</div>
+            <div class="m-unit">cm</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COL 2: 診斷 + 處方 -->
+      <div style="display:flex; flex-direction:column; gap:20px;">
+        <div class="card" style="flex:1;">
+          <div class="card-h">📋 診斷紀錄 (Condition)</div>
+          <ul id="diagList" class="hist-list">
+            <li class="no-data">讀取中...</li>
+          </ul>
+        </div>
+        <div class="card" style="flex:1;">
+          <div class="card-h">💊 處方紀錄 (MedicationRequest)</div>
+          <ul id="medList" class="hist-list">
+            <li class="no-data">讀取中...</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- COL 3 RIGHT: CDS + 建議 -->
+      <div class="col-right" style="display:flex; flex-direction:column; gap:20px;">
+        <div class="card">
+          <div class="card-h">🚦 CDS 臨床決策評估</div>
+          <div id="cdsPanel"><p class="no-data">分析中...</p></div>
+        </div>
+        <div class="card">
+          <div class="card-h">📌 個人化管理建議</div>
+          <ul id="adviceList" class="advice-list">
+            <li class="no-data">等待資料...</li>
+          </ul>
+          <div class="water-card">
+            <div class="water-l">
+              💧 每日建議飲水量
+              <small>依體重 ×35 mL 計算</small>
+            </div>
+            <div>
+              <span class="water-num" id="waterVal">--</span>
+              <span class="water-unit"> L</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /grid -->
+  </div><!-- /page -->
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ── LOINC codes ──────────────────────────────────────────
+    const LOINC = {
+      LDL:       "13457-7",   // LDL-C (Friedewald)
+      LDL2:      "2089-1",    // LDL-C (直接測量，備用)
+      TG:        "2571-8",
+      TC:        "2093-3",    // 總膽固醇
+      HDL:       "2085-9",
+      WEIGHT:    "29463-7",
+      WAIST:     "8280-0"
+    };
+
+    // ── Helpers ──────────────────────────────────────────────
+    function toast(msg, dur = 3000) {
+      const el = document.getElementById('toast');
+      el.textContent = msg; el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), dur);
     }
 
-    function calculateRiskLevel(patient, conditions, observations, medications, ldl) {
-        let age = 0;
-        if (patient.birthDate) {
-            const birthDate = new Date(patient.birthDate);
-            const today = new Date();
-            age = Math.floor((today - birthDate) / (365.25 * 24 * 60 * 60 * 1000));
-        }
-        const gender = patient.gender || 'unknown';
-
-        const latestObservations = {};
-        observations.forEach(obs => {
-            const code = obs.code?.coding?.[0]?.code || obs.code?.text || '';
-            if (obs.valueQuantity && obs.effectiveDateTime) {
-                if (!latestObservations[code] || new Date(obs.effectiveDateTime) > new Date(latestObservations[code].effectiveDateTime)) {
-                    latestObservations[code] = obs;
-                }
-            }
-        });
-
-        const ldlC    = latestObservations['13457-7']?.valueQuantity?.value || null;
-        const hdlC    = latestObservations['2085-9']?.valueQuantity?.value || null;
-        const sysBP   = latestObservations['8480-6']?.valueQuantity?.value || null;
-        const diaBP   = latestObservations['8462-4']?.valueQuantity?.value || null;
-        const eGFR    = latestObservations['50044-7']?.valueQuantity?.value || latestObservations['69405-9']?.valueQuantity?.value || null;
-
-        let riskFactors = 0;
-        if (sysBP >= 130 || diaBP >= 85) riskFactors++;
-        if (hdlC && ((gender === 'male' && hdlC < 40) || (gender === 'female' && hdlC < 50))) riskFactors++;
-        if (age >= (gender === 'male' ? 45 : 55)) riskFactors++;
-        if (hasCondition(conditions, ['抽菸', 'smoking', 'tobacco'])) riskFactors++;
-        if (hasCondition(conditions, ['早發家族史', 'family history premature CAD'])) riskFactors++;
-        if (hasCondition(conditions, ['代謝症候群', 'metabolic syndrome'])) riskFactors++;
-        if (hasCondition(conditions, ['肥胖', 'obesity', '腹部肥胖'])) riskFactors++;
-
-        let risk = "低風險";
-        let target = 130;
-        let color = "success";
-        let advice = "生活型態調整，定期追蹤";
-
-        if (hasCondition(conditions, ['多支血管阻塞', '一年內心肌梗塞', '≥2次心肌梗塞', '急性冠心症合併糖尿病', '周邊動脈疾病合併冠心病'])) {
-            risk = "極高風險";
-            target = 55;
-            color = "danger";
-            advice = "1. 立即起始高強度 Statin（如 Atorvastatin 40-80 mg 或 Rosuvastatin 20-40 mg）。\n2. 若 6-8 週後 LDL-C 未降至 <55 mg/dL，合併 Ezetimibe 10 mg。\n3. 若仍未達標，考慮 PCSK9 抑制劑（如 Evolocumab）或 Inclisiran（siRNA）。\n4. 追蹤肝功能及 CK 值，每 3 個月一次。";
-        }
-        else if (hasCondition(conditions, ['心肌梗塞', '中風', '腦中風', '周邊動脈疾病', 'PCI', 'CABG', 'ASCVD', '斑塊 ≥50%', '狹窄 ≥50%'])) {
-            risk = "非常高風險";
-            target = 70;
-            color = "warning";
-            advice = "1. 起始高強度 Statin（如 Atorvastatin 40-80 mg）。\n2. 若未達標，合併 Ezetimibe 10 mg。\n3. 目標 LDL-C <70 mg/dL，追蹤 6-8 週後調整劑量。\n4. 強調生活型態介入（如飲食控制與運動）。";
-        }
-        else if (hasCondition(conditions, ['糖尿病', '慢性腎臟病', 'CKD']) || (ldlC && ldlC >= 190) || (eGFR && eGFR < 60)) {
-            risk = "高風險";
-            target = 100;
-            color = "primary";
-            advice = "1. 起始中至高強度 Statin（如 Atorvastatin 20-40 mg）。\n2. 若 LDL-C >100 mg/dL，考慮合併 Ezetimibe 或 Bempedoic Acid。\n3. 每 6 個月追蹤血脂與腎功能。\n4. 加強糖尿病與血壓控制。";
-        }
-        else if (riskFactors >= 2) {
-            risk = "中風險";
-            target = 115;
-            color = "info";
-            advice = "1. 生活型態改變 3-6 個月（低脂、低糖飲食、規律運動、體重控制）。\n2. 若 LDL-C 仍 >115 mg/dL，考慮起始中強度 Statin（如 Atorvastatin 10-20 mg）。\n3. 每 6-12 個月追蹤血脂。\n4. 優先戒菸與血壓管理。";
-        }
-        else {
-            risk = "低風險";
-            target = 130;
-            color = "success";
-            advice = "1. 生活型態調整（健康飲食、規律運動、避免高膽固醇食物）。\n2. 無需立即用藥，定期追蹤血脂每 12 個月。\n3. 若有危險因子，建議控制血壓與戒菸。";
-        }
-
-        if (ldl !== 'N/A' && parseFloat(ldl) > target) {
-            advice += "\n\n【目前 LDL-C 未達標】建議立即評估調整治療方案，並在 6-8 週後複檢血脂。";
-        }
-
-        return { risk, target, color, advice };
+    function setSync(state, label) {
+      document.getElementById('syncDot').className = `sync-dot ${state}`;
+      document.getElementById('syncTxt').textContent = label;
     }
 
-    async function loadAllPatients() {
-        const listBody = document.getElementById('patient-list');
-        listBody.innerHTML = "";
-
-        for (const id of patientIds) {
-            try {
-                const pRes = await fetch(`${FHIR_BASE}/Patient/${id}`)
-                    .catch(() => { throw new Error('病人資料讀取失敗，請檢查網路或伺服器'); });
-                if (!pRes.ok) throw new Error(`病人資料讀取失敗: ${pRes.status}`);
-                const patient = await pRes.json();
-
-                const cRes = await fetch(`${FHIR_BASE}/Condition?patient=Patient/${id}`)
-                    .catch(() => { throw new Error('診斷資料讀取失敗，請檢查網路或伺服器'); });
-                const cBundle = await cRes.json();
-                const conditions = cBundle.entry ? cBundle.entry.map(e => e.resource) : [];
-                const condText = conditions.map(c => c.code?.text || '未知診斷').join(', ') || '無診斷資料';
-
-                const oRes = await fetch(`${FHIR_BASE}/Observation?patient=Patient/${id}&code=13457-7,2085-9,8480-6,8462-4,50044-7,69405-9,2887-8&_sort=-date`)
-                    .catch(() => { throw new Error('檢驗資料讀取失敗，請檢查網路或伺服器'); });
-                const oBundle = await oRes.json();
-                const observations = oBundle.entry ? oBundle.entry.map(e => e.resource) : [];
-
-                const ldlObs = observations.find(obs => obs.code?.coding?.[0]?.code === '13457-7' || obs.code?.text?.toLowerCase().includes('ldl'));
-                const ldl = ldlObs ? ldlObs.valueQuantity?.value : 'N/A';
-
-                const mRes = await fetch(`${FHIR_BASE}/MedicationRequest?patient=Patient/${id}`)
-                    .catch(() => { throw new Error('用藥資料讀取失敗，請檢查網路或伺服器'); });
-                const mBundle = await mRes.json();
-                const medications = mBundle.entry ? mBundle.entry.map(e => e.resource.medicationCodeableConcept?.text || '未知藥物') : [];
-
-                const { risk, target, color, advice } = calculateRiskLevel(patient, conditions, observations, medications, ldl);
-
-                patientDataStore[id] = { name: patient.name?.[0]?.text || '未知姓名', risk, target, ldl, cond: condText, advice, color, medications };
-
-                const status = (ldl !== 'N/A' && parseFloat(ldl) > target) ? '🔴 未達標' 
-                              : (ldl !== 'N/A' ? '🟢 已達標' : 'N/A');
-                listBody.innerHTML += `
-                    <tr class="clickable-row" onclick="showDetail('${id}')">
-                        <td><strong>${patient.name?.[0]?.text || '未知'}</strong></td>
-                        <td><span class="badge bg-${color} risk-tag">${risk}</span></td>
-                        <td>${ldl}</td>
-                        <td>${target}</td>
-                        <td>${status}</td>
-                    </tr>
-                `;
-            } catch (e) {
-                console.error(`讀取病人 ${id} 失敗`, e);
-                listBody.innerHTML += `
-                    <tr>
-                        <td colspan="5" class="text-danger">讀取 ${id} 失敗: ${e.message}</td>
-                    </tr>
-                `;
-            }
-        }
-        document.getElementById('loading-status').innerText = "資料更新完成";
+    function fmtDate(s) {
+      if (!s) return '日期不詳';
+      return s.split('T')[0];
     }
 
-    function showDetail(id) {
-        const data = patientDataStore[id];
-        if (!data) return;
+    // 從 Observation resource 安全地取值
+    function obsValue(r) {
+      // ✅ 修復4：valueQuantity 可能不存在，需 optional chaining
+      if (r.valueQuantity?.value != null) return r.valueQuantity.value;
+      if (r.component) {
+        // 血壓等 component 類型
+        const comp = r.component.find(c => c.valueQuantity?.value != null);
+        return comp?.valueQuantity?.value ?? null;
+      }
+      return null;
+    }
 
-        document.getElementById('placeholder').style.display = 'none';
-        document.getElementById('detail-pane').style.display = 'block';
+    // ✅ 修復3：Sandbox 用 category 查詢，不依賴逗號串接 LOINC
+    async function fetchObs(client, pid) {
+      const all = {};
+      try {
+        // 先用 category=laboratory 拿所有實驗室資料
+        const labBundle = await client.request(
+          `Observation?patient=${pid}&category=laboratory&_sort=-date&_count=50`
+        );
+        // 再拿 vital-signs
+        const vsBundle  = await client.request(
+          `Observation?patient=${pid}&category=vital-signs&_sort=-date&_count=30`
+        );
 
-        document.getElementById('det-name').innerText = data.name;
-        document.getElementById('det-cond').innerText = data.cond;
-        document.getElementById('det-ldl').innerText = data.ldl;
-        document.getElementById('det-target').innerText = data.target;
-        document.getElementById('det-advice').innerText = data.advice;
+        const entries = [
+          ...(labBundle.entry || []),
+          ...(vsBundle.entry  || [])
+        ];
 
-        // 用藥清單
-        const medList = document.getElementById('det-medications');
-        medList.innerHTML = '';
-        if (data.medications.length > 0) {
-            data.medications.forEach(med => {
-                medList.innerHTML += `<li class="list-group-item medication-item">${med}</li>`;
-            });
+        for (const e of entries) {
+          const r    = e.resource;
+          // ✅ 修復4：coding 陣列可能為空
+          const code = r.code?.coding?.[0]?.code;
+          if (!code) continue;
+          const val  = obsValue(r);
+          if (val == null) continue;
+
+          // 以最新的為主（_sort=-date 保證）
+          if (code === LOINC.LDL  || code === LOINC.LDL2) { if (!all.ldl)  all.ldl  = val; }
+          if (code === LOINC.TG)                           { if (!all.tg)   all.tg   = val; }
+          if (code === LOINC.TC)                           { if (!all.tc)   all.tc   = val; }
+          if (code === LOINC.HDL)                          { if (!all.hdl)  all.hdl  = val; }
+          if (code === LOINC.WEIGHT)                       { if (!all.wt)   all.wt   = Math.round(val); }
+          if (code === LOINC.WAIST)                        { if (!all.wai)  all.wai  = val; }
+        }
+      } catch (err) {
+        console.warn('Observation fetch error:', err);
+      }
+      return all;
+    }
+
+    // ── CDS 評估 ─────────────────────────────────────────────
+    function cdsEvaluate(v, gender) {
+      if (v.tg == null && v.ldl == null && v.tc == null) {
+        return { level: 'na', icon: '⚠️', title: '無血脂資料', body: 'Sandbox 病人尚無實驗室 Observation，其他功能仍可瀏覽。' };
+      }
+      const tg  = v.tg  ?? 0;
+      const ldl = v.ldl ?? 0;
+      const tc  = v.tc  ?? 0;
+
+      if (tg >= 500) {
+        return { level: 'alert', icon: '🚨', title: '極高風險 — 急迫處置', body: `TG ${tg} mg/dL ≥ 500，急性胰臟炎風險極高。請立即評估住院與 Fibrate 療法。` };
+      }
+      if (tg >= 200 || ldl >= 160 || tc >= 240) {
+        return { level: 'warn', icon: '⚠️', title: '指標偏高 — 積極介入', body: `血脂數值超標（TG ${tg} / LDL ${ldl} / TC ${tc} mg/dL），建議調整生活型態並考慮 Statin 療法。` };
+      }
+      if (ldl >= 130 || tg >= 150) {
+        return { level: 'warn', icon: '🔶', title: '邊緣偏高 — 飲食監控', body: '血脂輕度偏高，請加強飲食控制並三個月後複查。' };
+      }
+      return { level: 'safe', icon: '✅', title: '血脂控制良好', body: '目前血脂指標均在建議範圍內，請維持健康生活習慣。' };
+    }
+
+    // ── 建議 ─────────────────────────────────────────────────
+    function buildAdvice(v, gender) {
+      const items = [];
+      const waistLimit = gender === 'male' ? 90 : 80;
+
+      if ((v.tg ?? 0) > 150)
+        items.push(['🍚', '<b>限醣限酒：</b>精製糖與酒精是 TG 上升主因，建議改用全穀、戒酒。']);
+      if ((v.ldl ?? 0) > 130)
+        items.push(['🫒', '<b>油脂選擇：</b>以橄欖油、魚油替代飽和脂肪，減少紅肉與加工食品。']);
+      if (v.wai && v.wai > waistLimit)
+        items.push(['🏃', `<b>腰圍超標：</b>腰圍 ${v.wai} cm（建議男≤90/女≤80），每日快走 30 分鐘有助減脂。`]);
+      if ((v.tc ?? 0) >= 240)
+        items.push(['💊', '<b>Statin 評估：</b>TC ≥ 240 mg/dL，建議與醫師討論藥物治療必要性。']);
+      if (items.length === 0)
+        items.push(['🥗', '<b>維持現況：</b>繼續地中海式飲食、規律運動，每年複查血脂。']);
+
+      items.push(['💧', `<b>補充水分：</b>每日攝取足夠水分有助代謝。`]);
+      return items;
+    }
+
+    // ── 顏色分級工具 ─────────────────────────────────────────
+    function ldlClass(v)  { if (v >= 160) return 'alert'; if (v >= 130) return 'warn'; return 'ok'; }
+    function tgClass(v)   { if (v >= 500) return 'alert'; if (v >= 200) return 'warn'; if (v >= 150) return 'warn'; return 'ok'; }
+    function tcClass(v)   { if (v >= 240) return 'warn'; return 'ok'; }
+    function hdlClass(v, g) { const lo = g === 'male' ? 40 : 50; return v < lo ? 'warn' : 'ok'; }
+
+    function setMetric(id, valId, val, cls) {
+      const el  = document.getElementById(id);
+      const vel = document.getElementById(valId);
+      if (val != null) {
+        vel.textContent = val;
+        vel.className   = `m-val ${cls}`;
+        el.className    = `metric ${cls}`;
+      }
+    }
+
+    // ── MAIN ─────────────────────────────────────────────────
+    async function startApp() {
+      try {
+        const client = await FHIR.oauth2.ready();
+
+        // ✅ 修復2：client.patient.id 已被棄用，改用 getPatientId()
+        const pid = client.getPatientId();
+        if (!pid) throw new Error('launch context 未包含 patient ID');
+
+        setSync('', '載入病人資料...');
+
+        // ── 並行請求 ──
+        const [patient, v, condBundle, medBundle] = await Promise.all([
+          client.request(`Patient/${pid}`),
+          fetchObs(client, pid),                              // ✅ 修復3：改用 category 查詢
+          client.request(`Condition?patient=${pid}&_sort=-recorded-date&_count=20`).catch(() => ({ entry: [] })),
+          client.request(`MedicationRequest?patient=${pid}&_sort=-authoredon&_count=20`).catch(() => ({ entry: [] }))
+        ]);
+
+        // ── 1. 病人基本資料 ──
+        const nameObj = patient.name?.[0] || {};
+        const name    = nameObj.text || [...(nameObj.given || []), nameObj.family].filter(Boolean).join(' ') || '未知';
+        const age     = patient.birthDate ? Math.floor((Date.now() - new Date(patient.birthDate)) / 31557600000) : '—';
+        const gender  = patient.gender || 'unknown';
+        const gTxt    = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '不詳';
+
+        document.getElementById('pName').textContent = name;
+        document.getElementById('pMeta').textContent = `${gTxt} / ${age} 歲 | ${patient.birthDate || '生日未知'}`;
+        document.getElementById('pId').textContent   = `Patient ID: ${pid}`;
+
+        // ── 2. 指標上色 ──
+        setMetric('mLdl',  'vLdl',  v.ldl,  v.ldl  != null ? ldlClass(v.ldl)       : '');
+        setMetric('mTg',   'vTg',   v.tg,   v.tg   != null ? tgClass(v.tg)         : '');
+        setMetric('mTc',   'vTc',   v.tc,   v.tc   != null ? tcClass(v.tc)         : '');
+        setMetric('mHdl',  'vHdl',  v.hdl,  v.hdl  != null ? hdlClass(v.hdl, gender): '');
+        setMetric('mWt',   'vWt',   v.wt,   'ok');
+        setMetric('mWai',  'vWai',  v.wai,  'ok');
+
+        // ── 3. 診斷紀錄 ──
+        const diagList = document.getElementById('diagList');
+        const conds    = (condBundle.entry || []).map(e => e.resource);
+        if (conds.length > 0) {
+          // ✅ 修復7：Condition.code.coding 加 optional chaining
+          diagList.innerHTML = conds.map(r => {
+            const label  = r.code?.text || r.code?.coding?.[0]?.display || r.code?.coding?.[0]?.code || '未知診斷';
+            const date   = fmtDate(r.recordedDate || r.onsetDateTime);
+            const status = r.clinicalStatus?.coding?.[0]?.code || 'unknown';
+            const pillCls = status === 'active' ? 'pill-red' : 'pill-blue';
+            const pillTxt = status === 'active' ? '活動中' : status;
+            return `<li class="hist-item">
+              <div class="hist-name">${label}</div>
+              <div class="hist-meta">
+                <span class="pill ${pillCls}">${pillTxt}</span>
+                ${date}
+              </div>
+            </li>`;
+          }).join('');
         } else {
-            medList.innerHTML = '<li class="list-group-item text-muted">無用藥記錄</li>';
+          diagList.innerHTML = '<li class="no-data">無診斷紀錄</li>';
         }
 
-        // 進度條計算
-        const ldlValue = data.ldl !== 'N/A' ? parseFloat(data.ldl) : 0;
-        const targetValue = parseFloat(data.target);
-        let percentage = targetValue > 0 ? Math.min((targetValue / ldlValue) * 100, 150) : 0; // 避免除以 0
-        let progressColor = 'bg-success';
-        let progressText = '達成率：' + percentage.toFixed(0) + '%';
-
-        if (ldlValue > targetValue) {
-            progressColor = 'bg-danger';
-            progressText = '未達標 (' + (ldlValue - targetValue).toFixed(1) + ' mg/dL 差距)';
-            percentage = Math.min(100 - ((ldlValue - targetValue) / targetValue * 100), 100);
-        } else if (percentage > 100) {
-            progressColor = 'bg-success';
-            progressText = '已超標達成 (' + (percentage - 100).toFixed(0) + '%)';
-        }
-
-        const progressBar = document.getElementById('progress-bar');
-        progressBar.style.width = percentage + '%';
-        progressBar.className = 'progress-bar ' + progressColor;
-        progressBar.setAttribute('aria-valuenow', percentage);
-        document.getElementById('progress-text').innerText = progressText;
-
-        // 柱狀圖
-        const ctx = document.getElementById('ldl-chart').getContext('2d');
-        if (chartInstance) chartInstance.destroy(); // 銷毀舊圖表
-
-        chartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['目前 LDL-C', '目標值'],
-                datasets: [{
-                    label: 'LDL-C (mg/dL)',
-                    data: [ldlValue, targetValue],
-                    backgroundColor: [ldlValue > targetValue ? 'rgba(220, 53, 69, 0.8)' : 'rgba(40, 167, 69, 0.8)', 'rgba(0, 123, 255, 0.6)'],
-                    borderColor: [ldlValue > targetValue ? 'rgb(220, 53, 69)' : 'rgb(40, 167, 69)', 'rgb(0, 123, 255)'],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'mg/dL' } }
-                },
-                plugins: {
-                    legend: { display: false }
-                }
+        // ── 4. 處方紀錄 ──
+        const medList = document.getElementById('medList');
+        const meds    = (medBundle.entry || []).map(e => e.resource);
+        if (meds.length > 0) {
+          // ✅ 修復6：同時處理 medicationCodeableConcept 與 medicationReference
+          medList.innerHTML = meds.map(r => {
+            let medName = '未知藥物';
+            if (r.medicationCodeableConcept) {
+              medName = r.medicationCodeableConcept.text
+                     || r.medicationCodeableConcept.coding?.[0]?.display
+                     || medName;
+            } else if (r.medicationReference?.display) {
+              medName = r.medicationReference.display;
             }
-        });
+            const date   = fmtDate(r.authoredOn);
+            const status = r.status || 'unknown';
+            const pillCls = status === 'active' ? 'pill-green' : status === 'stopped' ? 'pill-red' : 'pill-amber';
+            const pillTxt = { active:'服用中', stopped:'已停藥', completed:'完成', cancelled:'取消' }[status] || status;
+            return `<li class="hist-item">
+              <div class="hist-name">${medName}</div>
+              <div class="hist-meta">
+                <span class="pill ${pillCls}">${pillTxt}</span>
+                ${date}
+              </div>
+            </li>`;
+          }).join('');
+        } else {
+          medList.innerHTML = '<li class="no-data">無處方紀錄</li>';
+        }
+
+        // ── 5. CDS 評估面板 ──
+        const cds     = cdsEvaluate(v, gender);
+        const cssMap  = { safe:'cds-safe', warn:'cds-warn', alert:'cds-alert', na:'cds-warn' };
+        document.getElementById('cdsPanel').innerHTML = `
+          <div class="cds-panel ${cssMap[cds.level] || 'cds-warn'}">
+            <div class="cds-icon">${cds.icon}</div>
+            <div>
+              <div class="cds-title ${cssMap[cds.level] || 'cds-warn'}">${cds.title}</div>
+              <div class="cds-body">${cds.body}</div>
+            </div>
+          </div>`;
+
+        // ── 6. 建議清單 ──
+        const advices = buildAdvice(v, gender);
+        document.getElementById('adviceList').innerHTML = advices.map(([icon, html]) =>
+          `<li class="advice-item"><span class="advice-icon">${icon}</span><span>${html}</span></li>`
+        ).join('');
+
+        // ── 7. 飲水建議 ──
+        const waterL = v.wt ? (v.wt * 35 / 1000).toFixed(1) : '2.0';
+        document.getElementById('waterVal').textContent = waterL;
+
+        // ── 完成 ──
+        setSync('ok', `已連線 · ${new Date().toLocaleTimeString('zh-TW')}`);
+        toast(`✅ ${name} 的資料已載入`);
+
+      } catch (err) {
+        console.error('FHIR Error:', err);
+        setSync('fail', '連線失敗');
+
+        // Demo 模式：顯示靜態提示讓畫面不空白
+        document.getElementById('pName').textContent  = 'Demo 模式（未連線）';
+        document.getElementById('pMeta').textContent  = '請從 launch.smarthealthit.org 啟動';
+        document.getElementById('cdsPanel').innerHTML = `
+          <div class="cds-panel cds-warn">
+            <div class="cds-icon">⚠️</div>
+            <div>
+              <div class="cds-title cds-warn">未透過 SMART Launcher 啟動</div>
+              <div class="cds-body">請前往 <b>launch.smarthealthit.org</b>，選擇 EHR Launch → 選病人 → 填入 launch.html 網址後啟動。</div>
+            </div>
+          </div>`;
+        document.getElementById('adviceList').innerHTML = '<li class="no-data">無法載入建議（未連線）</li>';
+        toast('⚠️ FHIR 授權失敗，顯示 Demo 畫面');
+      }
     }
 
-    // 啟動載入
-    loadAllPatients();
-</script>
-
+    startApp();
+  </script>
 </body>
 </html>
