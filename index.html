@@ -603,36 +603,71 @@ function obsValue(r) {
 // ══════════════════════════════════════════════════════════
 // FHIR DATA FETCH
 // ══════════════════════════════════════════════════════════
+
+// 所有已知的 LDL-C LOINC codes（Sandbox 可能使用任何一個）
+const LDL_CODES = new Set(['13457-7', '2089-1', '18262-6', '39469-2', '12773-8']);
+const TG_CODES  = new Set(['2571-8', '3043-7']);
+const TC_CODES  = new Set(['2093-3', '35200-5']);
+const HDL_CODES = new Set(['2085-9', '14646-4']);
+const WT_CODES  = new Set(['29463-7', '3141-9']);
+const WAI_CODES = new Set(['8280-0', '56086-2']);
+
+// 從 resource 的所有 coding 中取得 code（不只看 coding[0]）
+function extractCodes(r) {
+  return (r.code?.coding || []).map(c => c.code).filter(Boolean);
+}
+
+function hasCode(codes, codeSet) {
+  return codes.some(c => codeSet.has(c));
+}
+
 async function fetchObs(client, pid) {
   const all = { history: [] };
   try {
-    const [labBundle, vsBundle] = await Promise.all([
+    // 策略：同時用 category 查詢 + 直接用 LOINC code 查詢（避免 Sandbox 沒有標 category 的情況）
+    const requests = [
+      // 有 category 的
       client.request(`Observation?patient=${pid}&category=laboratory&_sort=-date&_count=100`).catch(() => ({ entry: [] })),
       client.request(`Observation?patient=${pid}&category=vital-signs&_sort=-date&_count=50`).catch(() => ({ entry: [] })),
-    ]);
+      // 直接用 LOINC code 查（SMART Health IT Sandbox 需要這個）
+      client.request(`Observation?patient=${pid}&code=http://loinc.org|2089-1,http://loinc.org|13457-7,http://loinc.org|18262-6&_sort=-date&_count=50`).catch(() => ({ entry: [] })),
+      client.request(`Observation?patient=${pid}&code=http://loinc.org|2571-8,http://loinc.org|2093-3,http://loinc.org|2085-9&_sort=-date&_count=50`).catch(() => ({ entry: [] })),
+    ];
 
-    const entries = [...(labBundle.entry || []), ...(vsBundle.entry || [])];
+    const bundles = await Promise.all(requests);
+
+    // 合併並去重（用 resource.id）
+    const seen = new Set();
+    const entries = [];
+    for (const bundle of bundles) {
+      for (const e of (bundle.entry || [])) {
+        const id = e.resource?.id;
+        if (id && seen.has(id)) continue;
+        if (id) seen.add(id);
+        entries.push(e);
+      }
+    }
 
     for (const e of entries) {
-      const r = e.resource;
-      const code  = r.code?.coding?.[0]?.code;
-      if (!code) continue;
+      const r    = e.resource;
+      const codes = extractCodes(r);   // 掃描所有 coding，不只看 [0]
+      if (codes.length === 0) continue;
       const val = obsValue(r);
       if (val == null) continue;
 
-      if (code === LOINC.LDL || code === LOINC.LDL2) {
+      if (hasCode(codes, LDL_CODES)) {
         if (!all.ldl) all.ldl = fmt2(val);
-        // Collect history for chart
-        const d = r.effectiveDateTime || r.issued;
-        if (d) all.history.push({ date: d.substring(0,7), val: fmt2(val) });
+        const d = r.effectiveDateTime || r.effectivePeriod?.start || r.issued;
+        if (d) all.history.push({ date: d.substring(0, 7), val: fmt2(val) });
       }
-      if (code === LOINC.TG     && !all.tg ) all.tg  = fmt2(val);
-      if (code === LOINC.TC     && !all.tc ) all.tc  = fmt2(val);
-      if (code === LOINC.HDL    && !all.hdl) all.hdl = fmt2(val);
-      if (code === LOINC.WEIGHT && !all.wt ) all.wt  = fmt2(val);
-      if (code === LOINC.WAIST  && !all.wai) all.wai = fmt2(val);
+      if (hasCode(codes, TG_CODES)  && !all.tg ) all.tg  = fmt2(val);
+      if (hasCode(codes, TC_CODES)  && !all.tc ) all.tc  = fmt2(val);
+      if (hasCode(codes, HDL_CODES) && !all.hdl) all.hdl = fmt2(val);
+      if (hasCode(codes, WT_CODES)  && !all.wt ) all.wt  = fmt2(val);
+      if (hasCode(codes, WAI_CODES) && !all.wai) all.wai = fmt2(val);
     }
-    // sort history oldest → newest
+
+    // 排序：最舊 → 最新
     all.history.sort((a, b) => a.date.localeCompare(b.date));
   } catch (err) {
     console.warn('Observation fetch error:', err);
