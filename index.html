@@ -585,6 +585,12 @@ function fmtDate(s) {
   return s.split('T')[0];
 }
 
+// 格式化數值到小數點後兩位
+function fmt2(v) {
+  if (v == null) return null;
+  return parseFloat(parseFloat(v).toFixed(2));
+}
+
 function obsValue(r) {
   if (r?.valueQuantity?.value != null) return r.valueQuantity.value;
   if (r?.component) {
@@ -615,16 +621,16 @@ async function fetchObs(client, pid) {
       if (val == null) continue;
 
       if (code === LOINC.LDL || code === LOINC.LDL2) {
-        if (!all.ldl) all.ldl = val;
+        if (!all.ldl) all.ldl = fmt2(val);
         // Collect history for chart
         const d = r.effectiveDateTime || r.issued;
-        if (d) all.history.push({ date: d.substring(0,7), val: Math.round(val) });
+        if (d) all.history.push({ date: d.substring(0,7), val: fmt2(val) });
       }
-      if (code === LOINC.TG     && !all.tg ) all.tg  = val;
-      if (code === LOINC.TC     && !all.tc ) all.tc  = val;
-      if (code === LOINC.HDL    && !all.hdl) all.hdl = val;
-      if (code === LOINC.WEIGHT && !all.wt ) all.wt  = Math.round(val);
-      if (code === LOINC.WAIST  && !all.wai) all.wai = val;
+      if (code === LOINC.TG     && !all.tg ) all.tg  = fmt2(val);
+      if (code === LOINC.TC     && !all.tc ) all.tc  = fmt2(val);
+      if (code === LOINC.HDL    && !all.hdl) all.hdl = fmt2(val);
+      if (code === LOINC.WEIGHT && !all.wt ) all.wt  = fmt2(val);
+      if (code === LOINC.WAIST  && !all.wai) all.wai = fmt2(val);
     }
     // sort history oldest → newest
     all.history.sort((a, b) => a.date.localeCompare(b.date));
@@ -862,12 +868,12 @@ function runDemo() {
   });
 
   const v = m.obs;
-  setMetric('mLdl', 'vLdl', v.ldl,  ldlClass(v.ldl));
-  setMetric('mTg',  'vTg',  v.tg,   tgClass(v.tg));
-  setMetric('mTc',  'vTc',  v.tc,   tcClass(v.tc));
-  setMetric('mHdl', 'vHdl', v.hdl,  hdlClass(v.hdl, 'male'));
-  setMetric('mWt',  'vWt',  v.wt,   'ok');
-  setMetric('mWai', 'vWai', v.wai,  v.wai > 90 ? 'warn' : 'ok');
+  setMetric('mLdl', 'vLdl', fmt2(v.ldl),  ldlClass(v.ldl));
+  setMetric('mTg',  'vTg',  fmt2(v.tg),   tgClass(v.tg));
+  setMetric('mTc',  'vTc',  fmt2(v.tc),   tcClass(v.tc));
+  setMetric('mHdl', 'vHdl', fmt2(v.hdl),  hdlClass(v.hdl, 'male'));
+  setMetric('mWt',  'vWt',  fmt2(v.wt),   'ok');
+  setMetric('mWai', 'vWai', fmt2(v.wai),  v.wai > 90 ? 'warn' : 'ok');
 
   // LDL delta
   const hist = m.ldlHistory;
@@ -902,7 +908,7 @@ function runDemo() {
     .map(([icon, html]) => `<li class="advice-item"><span class="advice-icon">${icon}</span><span>${html}</span></li>`)
     .join('');
 
-  document.getElementById('waterVal').textContent = (v.wt * 35 / 1000).toFixed(1);
+  document.getElementById('waterVal').textContent = (v.wt * 35 / 1000).toFixed(2);
   setSync('ok', `Demo 模式 · ${new Date().toLocaleTimeString('zh-TW')}`);
   toast('⚡ 示範資料已載入（未連線 FHIR）');
 }
@@ -952,12 +958,12 @@ async function startApp() {
     });
 
     // Metrics
-    setMetric('mLdl', 'vLdl', v.ldl,  v.ldl  != null ? ldlClass(v.ldl)          : '');
-    setMetric('mTg',  'vTg',  v.tg,   v.tg   != null ? tgClass(v.tg)            : '');
-    setMetric('mTc',  'vTc',  v.tc,   v.tc   != null ? tcClass(v.tc)            : '');
-    setMetric('mHdl', 'vHdl', v.hdl,  v.hdl  != null ? hdlClass(v.hdl, gender)  : '');
-    setMetric('mWt',  'vWt',  v.wt,   'ok');
-    setMetric('mWai', 'vWai', v.wai,  v.wai > (gender === 'male' ? 90 : 80) ? 'warn' : 'ok');
+    setMetric('mLdl', 'vLdl', fmt2(v.ldl),  v.ldl  != null ? ldlClass(v.ldl)          : '');
+    setMetric('mTg',  'vTg',  fmt2(v.tg),   v.tg   != null ? tgClass(v.tg)            : '');
+    setMetric('mTc',  'vTc',  fmt2(v.tc),   v.tc   != null ? tcClass(v.tc)            : '');
+    setMetric('mHdl', 'vHdl', fmt2(v.hdl),  v.hdl  != null ? hdlClass(v.hdl, gender)  : '');
+    setMetric('mWt',  'vWt',  fmt2(v.wt),   'ok');
+    setMetric('mWai', 'vWai', fmt2(v.wai),  v.wai > (gender === 'male' ? 90 : 80) ? 'warn' : 'ok');
 
     // LDL delta (last 2 history points)
     if (v.history?.length >= 2) {
@@ -986,7 +992,7 @@ async function startApp() {
       .join('');
 
     // Water
-    document.getElementById('waterVal').textContent = v.wt ? (v.wt * 35 / 1000).toFixed(1) : '2.0';
+    document.getElementById('waterVal').textContent = v.wt ? (v.wt * 35 / 1000).toFixed(2) : '2.00';
 
     setSync('ok', `已連線 · ${new Date().toLocaleTimeString('zh-TW')}`);
     toast(`✅ ${name} 的資料已載入`);
