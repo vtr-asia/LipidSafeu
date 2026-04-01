@@ -17,24 +17,32 @@
   --white:     #ffffff;
   --border:    #d4dde8;
   --dim:       #7a8fa6;
+
   --blue:      #1a56db;
   --blue-lt:   #dbeafe;
   --blue-glow: rgba(26,86,219,0.12);
+
   --teal:      #0d9488;
   --teal-lt:   #ccfbf1;
+
   --red:       #dc2626;
   --red-lt:    #fee2e2;
   --red-glow:  rgba(220,38,38,0.10);
+
   --amber:     #d97706;
   --amber-lt:  #fef3c7;
   --amber-glow:rgba(217,119,6,0.10);
+
   --orange:    #ea580c;
   --orange-lt: #ffedd5;
+
   --green:     #059669;
   --green-lt:  #d1fae5;
   --green-glow:rgba(5,150,105,0.10);
+
   --purple:    #7c3aed;
   --purple-lt: #ede9fe;
+
   --radius:    16px;
   --radius-sm: 10px;
   --shadow:    0 2px 20px rgba(10,15,30,0.06), 0 1px 4px rgba(10,15,30,0.04);
@@ -50,10 +58,12 @@ body {
   min-height: 100vh;
   font-size: 14px;
   line-height: 1.65;
+  /* subtle dot grid bg */
   background-image: radial-gradient(circle, #c8d3e8 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
+/* ── TOP NAV ── */
 .nav {
   position: sticky; top: 0; z-index: 200;
   background: rgba(255,255,255,0.88);
@@ -86,8 +96,10 @@ body {
 .sync-dot.fail{ background: var(--red); }
 .sync-dot.loading { background: var(--amber); animation: pulse 1.2s ease infinite; }
 
+/* ── PAGE ── */
 .page { max-width: 1320px; margin: 0 auto; padding: 28px 28px 80px; }
 
+/* ── PATIENT STRIP ── */
 .pt-strip {
   background: var(--white); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 20px 28px;
@@ -125,6 +137,7 @@ body {
   padding: 6px 12px; border-radius: 8px; white-space: nowrap;
 }
 
+/* ── RISK BANNER ── */
 .risk-banner {
   border-radius: var(--radius); padding: 18px 22px;
   display: flex; align-items: center; gap: 16px;
@@ -155,12 +168,14 @@ body {
 .rb-stat-val  { font-size: 28px; font-weight: 800; font-family: 'DM Mono', monospace; }
 .rb-stat-lbl  { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.65; }
 
+/* colour per risk */
 .rb-very-high .rb-label, .rb-very-high .rb-title, .rb-very-high .rb-stat-val { color: var(--red); }
 .rb-high      .rb-label, .rb-high      .rb-title, .rb-high      .rb-stat-val { color: var(--orange); }
 .rb-moderate  .rb-label, .rb-moderate  .rb-title, .rb-moderate  .rb-stat-val { color: var(--amber); }
 .rb-low       .rb-label, .rb-low       .rb-title, .rb-low       .rb-stat-val { color: var(--green); }
 .rb-na        .rb-label, .rb-na        .rb-title, .rb-na        .rb-stat-val { color: var(--dim); }
 
+/* ── MAIN GRID ── */
 .grid-main {
   display: grid;
   grid-template-columns: 1.1fr 1fr 320px;
@@ -175,6 +190,7 @@ body {
   .grid-main { grid-template-columns: 1fr; }
 }
 
+/* ── CARD ── */
 .card {
   background: var(--white);
   border: 1px solid var(--border);
@@ -193,6 +209,7 @@ body {
   border-radius: 2px; background: var(--blue); flex-shrink: 0;
 }
 
+/* ── METRICS GRID ── */
 .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .metric {
   background: var(--surface); border: 1.5px solid var(--border);
@@ -214,12 +231,7 @@ body {
 .m-delta.down { color: var(--green); }
 .m-delta.flat { color: var(--dim); }
 
-.formula-info {
-  font-size: 10px; color: var(--dim); margin-top: 10px; 
-  border-top: 1px dashed var(--border); padding-top: 6px;
-  line-height: 1.5;
-}
-
+/* ── ADVICE LIST ── */
 .advice-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
 .advice-item {
   display: flex; gap: 10px; align-items: flex-start;
@@ -231,6 +243,7 @@ body {
 .advice-item:hover { border-color: var(--blue); }
 .advice-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
 
+/* ── HISTORY LIST ── */
 .hist-list { list-style: none; display: flex; flex-direction: column; gap: 0; }
 .hist-item {
   padding: 12px 0; border-bottom: 1px solid var(--surface2);
@@ -250,9 +263,11 @@ body {
 .pill-amber  { background: var(--amber-lt);  color: var(--amber);  }
 .pill-purple { background: var(--purple-lt); color: var(--purple); }
 
+/* ── CHART ── */
 .chart-wrap { position: relative; height: 180px; margin-top: 12px; }
 .chart-empty { display: flex; align-items: center; justify-content: center; height: 180px; font-size: 13px; color: var(--dim); font-style: italic; }
 
+/* ── WATER BOX ── */
 .water-card {
   margin-top: 16px;
   background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
@@ -264,12 +279,14 @@ body {
 .water-num { font-size: 32px; font-weight: 800; color: var(--blue); font-family: 'DM Mono', monospace; }
 .water-unit { font-size: 13px; font-weight: 700; color: #3b82f6; }
 
+/* ── LDL TARGET BAR ── */
 .target-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--surface2); }
 .target-label   { font-size: 11px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
 .target-bar-wrap{ position: relative; height: 10px; background: var(--surface2); border-radius: 999px; overflow: hidden; }
 .target-bar-fill{ height: 100%; border-radius: 999px; transition: width 0.8s cubic-bezier(.22,1,.36,1); }
 .target-bar-info{ display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); margin-top: 5px; font-weight: 600; }
 
+/* ── SEPARATOR TAG ── */
 .sep-tag {
   grid-column: 1 / -1; display: flex; align-items: center; gap: 12px;
   font-size: 11px; font-weight: 700; color: var(--dim); letter-spacing: 0.08em; text-transform: uppercase;
@@ -278,6 +295,7 @@ body {
   content: ''; flex: 1; height: 1px; background: var(--border);
 }
 
+/* ── DEMO BADGE ── */
 .demo-badge {
   display: inline-flex; align-items: center; gap: 6px;
   background: var(--amber-lt); color: var(--amber);
@@ -285,6 +303,7 @@ body {
   font-size: 11px; font-weight: 700; padding: 3px 10px;
 }
 
+/* ── TOAST ── */
 .toast {
   position: fixed; bottom: 28px; right: 28px;
   background: var(--ink); color: white; border-radius: 12px;
@@ -296,26 +315,31 @@ body {
 }
 .toast.show { opacity: 1; transform: translateY(0); }
 
+/* ── SKELETON ── */
 .skel {
   background: linear-gradient(90deg, #e8edf5 25%, #f4f6fa 50%, #e8edf5 75%);
   background-size: 200% 100%; animation: skel 1.4s ease infinite;
   border-radius: 6px; display: inline-block;
 }
 
+/* ── ANIMATIONS ── */
 @keyframes fadeUp   { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes skel     { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 @keyframes pulse    { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes slideIn  { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
 
 .card:nth-child(1) { animation-delay: 0.05s; }
 .card:nth-child(2) { animation-delay: 0.10s; }
 .card:nth-child(3) { animation-delay: 0.15s; }
 .card:nth-child(4) { animation-delay: 0.20s; }
 
+/* ── NO DATA ── */
 .no-data { font-size: 12px; color: var(--dim); font-style: italic; padding: 4px 0; }
 </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav class="nav">
   <div class="nav-brand">
     <div class="nav-logo">🩸</div>
@@ -333,6 +357,7 @@ body {
 
 <div class="page">
 
+  <!-- PATIENT STRIP -->
   <div class="pt-strip">
     <div class="pt-avatar" id="ptAvatar">👤</div>
     <div class="pt-info">
@@ -343,6 +368,7 @@ body {
     <div class="pt-badge" id="pId">Patient ID: —</div>
   </div>
 
+  <!-- RISK BANNER -->
   <div class="risk-banner rb-na" id="riskBanner">
     <div class="rb-icon" id="rbIcon">⏳</div>
     <div class="rb-content">
@@ -357,8 +383,10 @@ body {
     </div>
   </div>
 
+  <!-- MAIN GRID -->
   <div class="grid-main">
 
+    <!-- COL 1: 脂質指標 + 趨勢圖 -->
     <div style="display:flex;flex-direction:column;gap:20px;">
       <div class="card">
         <div class="card-h"><span class="ch-bar"></span>🧪 臨床脂質 &amp; 代謝指標</div>
@@ -379,11 +407,6 @@ body {
             <div class="m-lbl">總膽固醇 TC</div>
             <div class="m-val" id="vTc">—</div>
             <div class="m-unit">mg/dL</div>
-            <div class="formula-info">
-              這是血液中所有膽固醇的總和。<br>
-              公式：$TC = HDL + LDL + (TG / 5)$<br>
-              標準值：建議維持在 200 mg/dL 以下
-            </div>
           </div>
           <div class="metric" id="mHdl">
             <div class="m-lbl">HDL-C 好膽固醇</div>
@@ -402,6 +425,7 @@ body {
           </div>
         </div>
 
+        <!-- LDL Target Bar -->
         <div class="target-section" id="targetSection" style="display:none">
           <div class="target-label">LDL-C 達標進度</div>
           <div class="target-bar-wrap">
@@ -414,6 +438,7 @@ body {
         </div>
       </div>
 
+      <!-- LDL 趨勢圖 -->
       <div class="card">
         <div class="card-h"><span class="ch-bar"></span>📈 LDL-C 歷史趨勢</div>
         <div id="chartContainer">
@@ -425,6 +450,7 @@ body {
       </div>
     </div>
 
+    <!-- COL 2: 診斷 + 處方 -->
     <div style="display:flex; flex-direction:column; gap:20px;">
       <div class="card" style="flex:1;">
         <div class="card-h"><span class="ch-bar"></span>📋 診斷紀錄</div>
@@ -440,6 +466,7 @@ body {
       </div>
     </div>
 
+    <!-- COL 3 RIGHT: 建議 -->
     <div class="col-right" style="display:flex; flex-direction:column; gap:20px;">
       <div class="card">
         <div class="card-h"><span class="ch-bar"></span>📌 個人化管理建議</div>
@@ -459,12 +486,15 @@ body {
       </div>
     </div>
 
-  </div>
-</div>
+  </div><!-- /grid -->
+</div><!-- /page -->
 
 <div class="toast" id="toast"></div>
 
 <script>
+// ══════════════════════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════════════════════
 const LOINC = {
   LDL:    '13457-7',
   LDL2:   '2089-1',
@@ -475,13 +505,14 @@ const LOINC = {
   WAIST:  '8280-0'
 };
 
+// 2025 台灣血脂管理共識：風險等級對應 LDL-C 目標
 const RISK_CONFIG = {
   'very-high': {
     label:    '極高風險',
     icon:     '🚨',
     cssClass: 'rb-very-high',
     ldlTarget: 55,
-    reduction:  50,
+    reduction:  50,   // % reduction required if baseline known
     desc:     '糖尿病合併心血管疾病、ASCVD 事件、CKD G3b+ 等。LDL-C 目標 < 55 mg/dL，並降低 ≥ 50%。建議高強度 Statin ± Ezetimibe。',
   },
   'high': {
@@ -510,6 +541,9 @@ const RISK_CONFIG = {
   },
 };
 
+// ══════════════════════════════════════════════════════════
+// MOCK DATA — Demo 模式
+// ══════════════════════════════════════════════════════════
 const MOCK = {
   patient: {
     name: '王小明（示範）', gender: 'male', age: 58,
@@ -521,17 +555,20 @@ const MOCK = {
       { name: 'Amlodipine 5mg',  status: 'active', date: '2024-08-20' },
     ]
   },
-  obs: { ldl: 98.42, tg: 185.15, tc: 218.00, hdl: 42.60, wt: 78.50, wai: 92.00 },
+  obs: { ldl: 98, tg: 185, tc: 218, hdl: 42, wt: 78, wai: 92 },
   ldlHistory: [
-    { date: '2024-01', val: 165.20 },
-    { date: '2024-04', val: 148.55 },
-    { date: '2024-07', val: 124.10 },
-    { date: '2024-10', val: 110.35 },
-    { date: '2025-01', val: 98.42  },
+    { date: '2024-01', val: 165 },
+    { date: '2024-04', val: 148 },
+    { date: '2024-07', val: 124 },
+    { date: '2024-10', val: 110 },
+    { date: '2025-01', val: 98  },
   ],
-  riskLevel: 'very-high',
+  riskLevel: 'very-high',  // T2DM = 高風險，有心血管因子 → 極高
 };
 
+// ══════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════
 function toast(msg, dur = 3200) {
   const el = document.getElementById('toast');
   el.textContent = msg; el.classList.add('show');
@@ -548,9 +585,10 @@ function fmtDate(s) {
   return s.split('T')[0];
 }
 
+// 格式化數值到小數點後兩位
 function fmt2(v) {
-  if (v == null || isNaN(v)) return null;
-  return parseFloat(v).toFixed(2);
+  if (v == null) return null;
+  return parseFloat(parseFloat(v).toFixed(2));
 }
 
 function obsValue(r) {
@@ -562,6 +600,11 @@ function obsValue(r) {
   return null;
 }
 
+// ══════════════════════════════════════════════════════════
+// FHIR DATA FETCH
+// ══════════════════════════════════════════════════════════
+
+// 所有已知的 LDL-C LOINC codes（Sandbox 可能使用任何一個）
 const LDL_CODES = new Set(['13457-7', '2089-1', '18262-6', '39469-2', '12773-8']);
 const TG_CODES  = new Set(['2571-8', '3043-7']);
 const TC_CODES  = new Set(['2093-3', '35200-5']);
@@ -569,6 +612,7 @@ const HDL_CODES = new Set(['2085-9', '14646-4']);
 const WT_CODES  = new Set(['29463-7', '3141-9']);
 const WAI_CODES = new Set(['8280-0', '56086-2']);
 
+// 從 resource 的所有 coding 中取得 code（不只看 coding[0]）
 function extractCodes(r) {
   return (r.code?.coding || []).map(c => c.code).filter(Boolean);
 }
@@ -580,14 +624,19 @@ function hasCode(codes, codeSet) {
 async function fetchObs(client, pid) {
   const all = { history: [] };
   try {
+    // 策略：同時用 category 查詢 + 直接用 LOINC code 查詢（避免 Sandbox 沒有標 category 的情況）
     const requests = [
+      // 有 category 的
       client.request(`Observation?patient=${pid}&category=laboratory&_sort=-date&_count=100`).catch(() => ({ entry: [] })),
       client.request(`Observation?patient=${pid}&category=vital-signs&_sort=-date&_count=50`).catch(() => ({ entry: [] })),
+      // 直接用 LOINC code 查（SMART Health IT Sandbox 需要這個）
       client.request(`Observation?patient=${pid}&code=http://loinc.org|2089-1,http://loinc.org|13457-7,http://loinc.org|18262-6&_sort=-date&_count=50`).catch(() => ({ entry: [] })),
       client.request(`Observation?patient=${pid}&code=http://loinc.org|2571-8,http://loinc.org|2093-3,http://loinc.org|2085-9&_sort=-date&_count=50`).catch(() => ({ entry: [] })),
     ];
 
     const bundles = await Promise.all(requests);
+
+    // 合併並去重（用 resource.id）
     const seen = new Set();
     const entries = [];
     for (const bundle of bundles) {
@@ -601,44 +650,59 @@ async function fetchObs(client, pid) {
 
     for (const e of entries) {
       const r    = e.resource;
-      const codes = extractCodes(r);
+      const codes = extractCodes(r);   // 掃描所有 coding，不只看 [0]
       if (codes.length === 0) continue;
       const val = obsValue(r);
       if (val == null) continue;
 
       if (hasCode(codes, LDL_CODES)) {
-        if (!all.ldl) all.ldl = val;
+        if (!all.ldl) all.ldl = fmt2(val);
         const d = r.effectiveDateTime || r.effectivePeriod?.start || r.issued;
-        if (d) all.history.push({ date: d.substring(0, 7), val: val });
+        if (d) all.history.push({ date: d.substring(0, 7), val: fmt2(val) });
       }
-      if (hasCode(codes, TG_CODES)  && !all.tg ) all.tg  = val;
-      if (hasCode(codes, TC_CODES)  && !all.tc ) all.tc  = val;
-      if (hasCode(codes, HDL_CODES) && !all.hdl) all.hdl = val;
-      if (hasCode(codes, WT_CODES)  && !all.wt ) all.wt  = val;
-      if (hasCode(codes, WAI_CODES) && !all.wai) all.wai = val;
+      if (hasCode(codes, TG_CODES)  && !all.tg ) all.tg  = fmt2(val);
+      if (hasCode(codes, TC_CODES)  && !all.tc ) all.tc  = fmt2(val);
+      if (hasCode(codes, HDL_CODES) && !all.hdl) all.hdl = fmt2(val);
+      if (hasCode(codes, WT_CODES)  && !all.wt ) all.wt  = fmt2(val);
+      if (hasCode(codes, WAI_CODES) && !all.wai) all.wai = fmt2(val);
     }
+
+    // 排序：最舊 → 最新
     all.history.sort((a, b) => a.date.localeCompare(b.date));
-  } catch (err) { console.warn('Observation fetch error:', err); }
+  } catch (err) {
+    console.warn('Observation fetch error:', err);
+  }
   return all;
 }
 
+// ══════════════════════════════════════════════════════════
+// CDS — 2025 台灣血脂管理共識風險分層
+// ══════════════════════════════════════════════════════════
 function inferRiskLevel(conditions = [], obs = {}) {
   const diagText = conditions.map(c => (c || '').toLowerCase()).join(' ');
+
   const hasCVD      = /atherosclerosis|myocardial|mi|stroke|peripheral artery|pad|coronary|angina|pvd/.test(diagText);
   const hasDM       = /diabetes|diabetic|t2dm/.test(diagText);
   const hasCKD      = /chronic kidney|ckd|renal failure|renal disease/.test(diagText);
   const hasHTN      = /hypertension|hypertensive/.test(diagText);
   const hasDyslip   = /dyslipidemia|hyperlipidemia|hypercholesterolemia/.test(diagText);
 
-  if (hasCVD || (hasDM && hasCVD) || (hasCKD && ((obs.tc || 0) > 200 || (obs.ldl || 0) > 100))) return 'very-high';
+  // Very High: CVD event OR DM + CVD OR CKD G3b+
+  if (hasCVD || (hasDM && hasCVD) || (hasCKD && (obs.tc > 200 || obs.ldl > 100))) return 'very-high';
+  // High: DM alone OR multiple risk factors
   if (hasDM || (hasHTN && hasDyslip)) return 'high';
+  // Moderate: 1–2 factors
   if (hasHTN || hasDyslip || hasCKD) return 'moderate';
+  // Fallback: use lipid values
   if ((obs.ldl ?? 0) >= 160 || (obs.tg ?? 0) >= 500) return 'very-high';
   if ((obs.ldl ?? 0) >= 130 || (obs.tg ?? 0) >= 200) return 'high';
   if ((obs.ldl ?? 0) >= 100 || (obs.tg ?? 0) >= 150) return 'moderate';
   return 'low';
 }
 
+// ══════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════
 function ldlClass(v) { if (v >= 160) return 'alert'; if (v >= 100) return 'warn'; return 'ok'; }
 function tgClass(v)  { if (v >= 500) return 'alert'; if (v >= 150) return 'warn'; return 'ok'; }
 function tcClass(v)  { if (v >= 240) return 'warn'; return 'ok'; }
@@ -648,73 +712,103 @@ function setMetric(id, valId, val, cls) {
   const el  = document.getElementById(id);
   const vel = document.getElementById(valId);
   if (val != null) {
-    vel.textContent = fmt2(val);
+    vel.textContent = val;
     vel.className   = `m-val ${cls}`;
     el.className    = `metric ${cls}`;
   }
 }
 
-function updateDelta(elId, current, previous) {
-  const el = document.getElementById(elId);
-  if (current == null || previous == null) return;
-  const diff = (current - previous).toFixed(2);
-  const absDiff = Math.abs(diff).toFixed(2);
-  
-  if (diff < 0) {
-    el.textContent = `▼ ${absDiff} 較上次`;
-    el.className = 'm-delta down';
-  } else if (diff > 0) {
-    el.textContent = `▲ ${absDiff} 較上次`;
-    el.className = 'm-delta up';
-  } else {
-    el.textContent = '— 持平';
-    el.className = 'm-delta flat';
-  }
-}
-
-function renderRiskBanner(riskLevel, ldl) {
+function renderRiskBanner(riskLevel, ldl, conditions = []) {
   const cfg  = RISK_CONFIG[riskLevel] || RISK_CONFIG.low;
   const banner = document.getElementById('riskBanner');
   banner.className  = `risk-banner ${cfg.cssClass}`;
+
   document.getElementById('rbIcon').textContent    = cfg.icon;
   document.getElementById('rbLabel').textContent   = `${cfg.label} — 2025 台灣共識`;
   document.getElementById('rbTitle').textContent   = cfg.label;
   document.getElementById('rbBody').textContent    = cfg.desc;
-  document.getElementById('rbLdlVal').textContent  = ldl != null ? fmt2(ldl) : '—';
+  document.getElementById('rbLdlVal').textContent  = ldl != null ? ldl : '—';
 
   const targetEl = document.getElementById('rbLdlTarget');
-  targetEl.textContent = cfg.reduction ? `LDL-C 目標 < ${cfg.ldlTarget} mg/dL，需降低 ≥ ${cfg.reduction}%` : `LDL-C 目標 < ${cfg.ldlTarget} mg/dL`;
+  if (cfg.reduction) {
+    targetEl.textContent = `LDL-C 目標 < ${cfg.ldlTarget} mg/dL，需降低 ≥ ${cfg.reduction}%`;
+  } else {
+    targetEl.textContent = `LDL-C 目標 < ${cfg.ldlTarget} mg/dL`;
+  }
 
+  // LDL target bar
   if (ldl != null) {
+    const pct = Math.min(100, Math.round((cfg.ldlTarget / ldl) * 100));
     const achieved = ldl < cfg.ldlTarget;
     document.getElementById('targetSection').style.display = 'block';
     document.getElementById('targetVal').textContent = cfg.ldlTarget;
     const fill = document.getElementById('targetBarFill');
-    fill.style.width = achieved ? '100%' : `${Math.min(100, Math.round((cfg.ldlTarget / ldl) * 100))}%`;
-    fill.style.background = achieved ? 'var(--green)' : 'var(--amber)';
-    document.getElementById('targetStatus').textContent = achieved ? `✅ 已達標（${fmt2(ldl)} < ${cfg.ldlTarget}）` : `❌ 未達標（差 ${fmt2(ldl - cfg.ldlTarget)} mg/dL）`;
+    fill.style.width    = achieved ? '100%' : `${pct}%`;
+    fill.style.background = achieved ? 'var(--green)' : pct > 70 ? 'var(--amber)' : 'var(--red)';
+    document.getElementById('targetStatus').textContent =
+      achieved ? `✅ 已達標（${ldl} < ${cfg.ldlTarget}）` : `❌ 未達標（差 ${ldl - cfg.ldlTarget} mg/dL）`;
   }
 }
 
 function renderLdlChart(history) {
-  const wrap = document.getElementById('chartWrap');
+  const wrap  = document.getElementById('chartWrap');
   const empty = document.getElementById('chartEmpty');
-  if (!history || history.length < 2) { empty.textContent = '歷史資料不足'; return; }
-  empty.style.display = 'none'; wrap.style.display = 'block';
+
+  if (!history || history.length < 2) {
+    empty.textContent = '歷史資料不足（需 ≥2 筆）';
+    return;
+  }
+
+  empty.style.display = 'none';
+  wrap.style.display  = 'block';
+
+  const labels = history.map(h => h.date);
+  const data   = history.map(h => h.val);
+
+  // Gradient fill
   const ctx = document.getElementById('ldlChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 180);
+  grad.addColorStop(0, 'rgba(26,86,219,0.25)');
+  grad.addColorStop(1, 'rgba(26,86,219,0.00)');
+
   new Chart(ctx, {
     type: 'line',
     data: {
-      labels: history.map(h => h.date),
+      labels,
       datasets: [{
-        label: 'LDL-C',
-        data: history.map(h => h.val),
+        label: 'LDL-C (mg/dL)',
+        data,
+        fill: true,
+        backgroundColor: grad,
         borderColor: 'var(--blue)',
-        backgroundColor: 'rgba(26,86,219,0.1)',
-        fill: true, tension: 0.4, pointRadius: 4
+        borderWidth: 2.5,
+        tension: 0.4,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: 'var(--blue)',
+        pointRadius: 5,
+        pointHoverRadius: 7,
       }]
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `LDL-C: ${ctx.parsed.y} mg/dL`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#7a8fa6' } },
+        y: {
+          grid: { color: '#edf2f7' },
+          ticks: { font: { size: 11 }, color: '#7a8fa6' },
+          beginAtZero: false
+        }
+      }
+    }
   });
 }
 
@@ -723,105 +817,225 @@ function buildAdvice(v, gender, riskLevel, condDiags = []) {
   const waistLimit = gender === 'male' ? 90 : 80;
   const cfg = RISK_CONFIG[riskLevel] || RISK_CONFIG.low;
 
+  // High risk → statin
   if (riskLevel === 'very-high' || riskLevel === 'high') {
-    if (!condDiags.some(d => /statin/.test((d||'').toLowerCase())))
-      items.push(['💊', `<b>Statin 療法：</b>應積極治療，LDL-C 目標 &lt; ${cfg.ldlTarget} mg/dL。`]);
+    const statinActive = condDiags.some(d => /statin|rosuvastatin|atorvastatin|pitavastatin/.test((d||'').toLowerCase()));
+    if (!statinActive) {
+      items.push(['💊', `<b>Statin 療法：</b>${cfg.label}病患應積極使用高強度 Statin，LDL-C 目標 &lt; ${cfg.ldlTarget} mg/dL。`]);
+    }
   }
-  if ((v.tg ?? 0) > 150) items.push(['🍚', '<b>限醣限酒：</b>精製糖與酒精是 TG 上升主因。']);
-  if ((v.ldl ?? 0) > 100) items.push(['🫒', '<b>飲食選擇：</b>地中海飲食，減少飽和脂肪攝取。']);
-  if (v.wai && v.wai > waistLimit) items.push(['🏃', `<b>腰圍管理：</b>腰圍 ${fmt2(v.wai)} cm，建議每日快走 30 分鐘。`]);
-  if (items.length === 0) items.push(['🥗', '<b>維持現況：</b>血脂控制良好，建議每年複查。']);
+  if ((v.tg ?? 0) > 150)
+    items.push(['🍚', '<b>限醣限酒：</b>精製糖與酒精是 TG 上升主因，建議改用全穀類主食，嚴格戒酒。']);
+  if ((v.ldl ?? 0) > 100)
+    items.push(['🫒', '<b>飲食選擇：</b>以橄欖油、深海魚替代飽和脂肪，每週攝取 2–3 份深色蔬菜。']);
+  if (v.wai && v.wai > waistLimit)
+    items.push(['🏃', `<b>腰圍管理：</b>腰圍 ${v.wai} cm（建議男≤90/女≤80），每日快走 30 分鐘可改善胰島素阻抗。`]);
+  if ((v.hdl ?? 99) < (gender === 'male' ? 40 : 50))
+    items.push(['🐟', '<b>提升 HDL：</b>規律有氧運動（每週 ≥150 分鐘），攝取 Omega-3 脂肪酸。']);
+  if ((v.tg ?? 0) >= 500)
+    items.push(['🚨', '<b>緊急：TG ≥500 mg/dL，急性胰臟炎風險極高，請立即就醫評估 Fibrate 療法。</b>']);
+  if (items.length === 0)
+    items.push(['🥗', '<b>維持現況：</b>血脂控制良好，繼續地中海式飲食與規律運動，每年複查。']);
+  items.push(['🔬', '<b>定期追蹤：</b>建議每 3–6 個月複查血脂四項，達標後可延至每年一次。']);
   return items;
 }
 
 function renderConditions(conds) {
   const list = document.getElementById('diagList');
-  if (conds.length === 0) { list.innerHTML = '<li class="no-data">無紀錄</li>'; return []; }
+  if (conds.length === 0) { list.innerHTML = '<li class="no-data">無診斷紀錄</li>'; return; }
   list.innerHTML = conds.map(r => {
-    const label = r.code?.text || '未知診斷';
-    const date = fmtDate(r.recordedDate || r.onsetDateTime);
-    return `<li class="hist-item"><div class="hist-name">${label}</div><div class="hist-meta"><span class="pill pill-blue">紀錄</span>${date}</div></li>`;
+    const label  = r.code?.text || r.code?.coding?.[0]?.display || r.code?.coding?.[0]?.code || '未知診斷';
+    const date   = fmtDate(r.recordedDate || r.onsetDateTime);
+    const status = r.clinicalStatus?.coding?.[0]?.code || 'unknown';
+    const pillCls = status === 'active' ? 'pill-red' : 'pill-blue';
+    const pillTxt = status === 'active' ? '活動中' : status;
+    return `<li class="hist-item">
+      <div class="hist-name">${label}</div>
+      <div class="hist-meta"><span class="pill ${pillCls}">${pillTxt}</span>${date}</div>
+    </li>`;
   }).join('');
-  return conds.map(r => r.code?.text || '');
+  return conds.map(r => r.code?.text || r.code?.coding?.[0]?.display || '');
 }
 
 function renderMeds(meds) {
   const list = document.getElementById('medList');
-  if (meds.length === 0) { list.innerHTML = '<li class="no-data">無紀錄</li>'; return []; }
+  if (meds.length === 0) { list.innerHTML = '<li class="no-data">無處方紀錄</li>'; return []; }
   list.innerHTML = meds.map(r => {
-    const medName = r.medicationCodeableConcept?.text || '未知藥物';
-    return `<li class="hist-item"><div class="hist-name">${medName}</div><div class="hist-meta"><span class="pill pill-green">服用中</span>${fmtDate(r.authoredOn)}</div></li>`;
+    let medName = '未知藥物';
+    if (r.medicationCodeableConcept) {
+      medName = r.medicationCodeableConcept.text
+        || r.medicationCodeableConcept.coding?.[0]?.display
+        || medName;
+    } else if (r.medicationReference?.display) {
+      medName = r.medicationReference.display;
+    } else if (r.medication?.concept?.text) {
+      medName = r.medication.concept.text;  // R4B / R5
+    }
+    const date    = fmtDate(r.authoredOn);
+    const status  = r.status || 'unknown';
+    const pillCls = { active:'pill-green', stopped:'pill-red', completed:'pill-blue', cancelled:'pill-amber' }[status] || 'pill-amber';
+    const pillTxt = { active:'服用中', stopped:'已停藥', completed:'完成', cancelled:'取消' }[status] || status;
+    return `<li class="hist-item">
+      <div class="hist-name">${medName}</div>
+      <div class="hist-meta"><span class="pill ${pillCls}">${pillTxt}</span>${date}</div>
+    </li>`;
   }).join('');
-  return meds.map(r => r.medicationCodeableConcept?.text || '');
+  return meds.map(r => r.medicationCodeableConcept?.text || r.medicationReference?.display || '');
 }
 
+// ══════════════════════════════════════════════════════════
+// DEMO MODE
+// ══════════════════════════════════════════════════════════
 function runDemo() {
   document.getElementById('demoBadge').style.display = 'inline-flex';
   const m = MOCK;
+
   document.getElementById('pName').textContent = m.patient.name;
   document.getElementById('pMeta').textContent = `男性 / ${m.patient.age} 歲 | ${m.patient.birthDate}`;
-  document.getElementById('pId').textContent = `ID: ${m.patient.pid}`;
-  
-  const v = m.obs;
-  setMetric('mLdl', 'vLdl', v.ldl, ldlClass(v.ldl));
-  setMetric('mTg',  'vTg',  v.tg,  tgClass(v.tg));
-  setMetric('mTc',  'vTc',  v.tc,  tcClass(v.tc));
-  setMetric('mHdl', 'vHdl', v.hdl, hdlClass(v.hdl, 'male'));
-  setMetric('mWt',  'vWt',  v.wt,  'ok');
-  setMetric('mWai', 'vWai', v.wai, v.wai > 90 ? 'warn' : 'ok');
+  document.getElementById('pId').textContent   = `Patient ID: ${m.patient.pid}`;
 
-  if (m.ldlHistory.length >= 2) {
-    updateDelta('dLdl', m.ldlHistory[m.ldlHistory.length-1].val, m.ldlHistory[m.ldlHistory.length-2].val);
+  const chips = document.getElementById('ptChips');
+  m.patient.conditions.forEach(c => {
+    const el = document.createElement('span');
+    el.className = 'pt-chip pt-chip-purple';
+    el.textContent = c;
+    chips.appendChild(el);
+  });
+
+  const v = m.obs;
+  setMetric('mLdl', 'vLdl', fmt2(v.ldl),  ldlClass(v.ldl));
+  setMetric('mTg',  'vTg',  fmt2(v.tg),   tgClass(v.tg));
+  setMetric('mTc',  'vTc',  fmt2(v.tc),   tcClass(v.tc));
+  setMetric('mHdl', 'vHdl', fmt2(v.hdl),  hdlClass(v.hdl, 'male'));
+  setMetric('mWt',  'vWt',  fmt2(v.wt),   'ok');
+  setMetric('mWai', 'vWai', fmt2(v.wai),  v.wai > 90 ? 'warn' : 'ok');
+
+  // LDL delta
+  const hist = m.ldlHistory;
+  if (hist.length >= 2) {
+    const diff = hist[hist.length-1].val - hist[hist.length-2].val;
+    const el   = document.getElementById('dLdl');
+    el.textContent  = diff < 0 ? `▼ ${Math.abs(diff)} 較上次` : diff > 0 ? `▲ ${diff} 較上次` : '— 持平';
+    el.className    = `m-delta ${diff < 0 ? 'down' : diff > 0 ? 'up' : 'flat'}`;
   }
 
-  renderRiskBanner(m.riskLevel, v.ldl);
+  renderRiskBanner(m.riskLevel, v.ldl, []);
   renderLdlChart(m.ldlHistory);
-  
+
+  // Conditions
+  document.getElementById('diagList').innerHTML = m.patient.conditions.map(c =>
+    `<li class="hist-item">
+      <div class="hist-name">${c}</div>
+      <div class="hist-meta"><span class="pill pill-red">活動中</span>示範資料</div>
+    </li>`
+  ).join('');
+
+  // Meds
+  document.getElementById('medList').innerHTML = m.patient.meds.map(med =>
+    `<li class="hist-item">
+      <div class="hist-name">${med.name}</div>
+      <div class="hist-meta"><span class="pill pill-green">服用中</span>${med.date}</div>
+    </li>`
+  ).join('');
+
   const advices = buildAdvice(v, 'male', m.riskLevel, m.patient.conditions);
-  document.getElementById('adviceList').innerHTML = advices.map(([icon, html]) => `<li class="advice-item"><span class="advice-icon">${icon}</span><span>${html}</span></li>`).join('');
+  document.getElementById('adviceList').innerHTML = advices
+    .map(([icon, html]) => `<li class="advice-item"><span class="advice-icon">${icon}</span><span>${html}</span></li>`)
+    .join('');
+
   document.getElementById('waterVal').textContent = (v.wt * 35 / 1000).toFixed(2);
-  setSync('ok', 'Demo 模式');
+  setSync('ok', `Demo 模式 · ${new Date().toLocaleTimeString('zh-TW')}`);
+  toast('⚡ 示範資料已載入（未連線 FHIR）');
 }
 
+// ══════════════════════════════════════════════════════════
+// FHIR LIVE MODE
+// ══════════════════════════════════════════════════════════
 async function startApp() {
   try {
     const client = await FHIR.oauth2.ready();
-    const pid = client.getPatientId?.() || client.state?.tokenResponse?.patient;
-    if (!pid) throw new Error('No patient ID');
+    const pid    = client.getPatientId?.() ?? client.state?.tokenResponse?.patient;
+    if (!pid) throw new Error('launch context 未包含 patient ID');
 
-    setSync('loading', '載入中...');
+    setSync('loading', '載入資料中...');
+
     const [patient, v, condBundle, medBundle] = await Promise.all([
       client.request(`Patient/${pid}`),
       fetchObs(client, pid),
-      client.request(`Condition?patient=${pid}&_count=20`).catch(() => ({ entry: [] })),
-      client.request(`MedicationRequest?patient=${pid}&_count=20`).catch(() => ({ entry: [] })),
+      client.request(`Condition?patient=${pid}&_sort=-recorded-date&_count=20`).catch(() => ({ entry: [] })),
+      client.request(`MedicationRequest?patient=${pid}&_sort=-authoredon&_count=20`).catch(() => ({ entry: [] })),
     ]);
 
-    document.getElementById('pName').textContent = patient.name?.[0]?.text || '未知';
-    const gender = patient.gender || 'unknown';
-    const age = patient.birthDate ? Math.floor((Date.now() - new Date(patient.birthDate)) / 31557600000) : '—';
-    document.getElementById('pMeta').textContent = `${gender} / ${age} 歲`;
+    // Patient info
+    const nameObj = patient.name?.[0] || {};
+    const name    = nameObj.text || [...(nameObj.given || []), nameObj.family].filter(Boolean).join(' ') || '未知';
+    const age     = patient.birthDate ? Math.floor((Date.now() - new Date(patient.birthDate)) / 31557600000) : '—';
+    const gender  = patient.gender || 'unknown';
+    const gTxt    = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '不詳';
 
-    setMetric('mLdl', 'vLdl', v.ldl, ldlClass(v.ldl));
-    setMetric('mTg',  'vTg',  v.tg,  tgClass(v.tg));
-    setMetric('mTc',  'vTc',  v.tc,  tcClass(v.tc));
-    setMetric('mHdl', 'vHdl', v.hdl, hdlClass(v.hdl, gender));
-    setMetric('mWt',  'vWt',  v.wt,  'ok');
-    setMetric('mWai', 'vWai', v.wai, v.wai > (gender === 'male' ? 90 : 80) ? 'warn' : 'ok');
+    document.getElementById('pName').textContent = name;
+    document.getElementById('pMeta').textContent = `${gTxt} / ${age} 歲 | ${patient.birthDate || '生日未知'}`;
+    document.getElementById('pId').textContent   = `Patient ID: ${pid}`;
 
+    // Active conditions for risk inference
+    const conds     = (condBundle.entry || []).map(e => e.resource);
+    const condDiags = conds.map(r => r.code?.text || r.code?.coding?.[0]?.display || '');
+    const meds      = (medBundle.entry || []).map(e => e.resource);
+    const medNames  = meds.map(r => r.medicationCodeableConcept?.text || r.medicationReference?.display || '');
+
+    // Condition chips on patient strip
+    const chips = document.getElementById('ptChips');
+    condDiags.slice(0, 3).forEach(c => {
+      if (!c) return;
+      const el = document.createElement('span');
+      el.className = 'pt-chip pt-chip-purple'; el.textContent = c;
+      chips.appendChild(el);
+    });
+
+    // Metrics
+    setMetric('mLdl', 'vLdl', fmt2(v.ldl),  v.ldl  != null ? ldlClass(v.ldl)          : '');
+    setMetric('mTg',  'vTg',  fmt2(v.tg),   v.tg   != null ? tgClass(v.tg)            : '');
+    setMetric('mTc',  'vTc',  fmt2(v.tc),   v.tc   != null ? tcClass(v.tc)            : '');
+    setMetric('mHdl', 'vHdl', fmt2(v.hdl),  v.hdl  != null ? hdlClass(v.hdl, gender)  : '');
+    setMetric('mWt',  'vWt',  fmt2(v.wt),   'ok');
+    setMetric('mWai', 'vWai', fmt2(v.wai),  v.wai > (gender === 'male' ? 90 : 80) ? 'warn' : 'ok');
+
+    // LDL delta (last 2 history points)
     if (v.history?.length >= 2) {
-      updateDelta('dLdl', v.history[v.history.length-1].val, v.history[v.history.length-2].val);
+      const h  = v.history;
+      const diff = h[h.length-1].val - h[h.length-2].val;
+      const el = document.getElementById('dLdl');
+      el.textContent = diff < 0 ? `▼ ${Math.abs(diff)} 較上次` : diff > 0 ? `▲ ${diff} 較上次` : '持平';
+      el.className   = `m-delta ${diff < 0 ? 'down' : diff > 0 ? 'up' : 'flat'}`;
     }
 
-    const conds = (condBundle.entry || []).map(e => e.resource);
-    const riskLevel = inferRiskLevel(conds.map(r => r.code?.text), v);
-    renderRiskBanner(riskLevel, v.ldl);
-    renderLdlChart(v.history);
-    renderConditions(conds);
-    renderMeds((medBundle.entry || []).map(e => e.resource));
+    // Risk
+    const riskLevel = inferRiskLevel(condDiags, v);
+    renderRiskBanner(riskLevel, v.ldl, condDiags);
 
-    setSync('ok', '已連線');
-  } catch (e) { console.warn(e); runDemo(); }
+    // Chart
+    renderLdlChart(v.history);
+
+    // Lists
+    renderConditions(conds);
+    renderMeds(meds);
+
+    // Advice
+    const advices = buildAdvice(v, gender, riskLevel, [...condDiags, ...medNames]);
+    document.getElementById('adviceList').innerHTML = advices
+      .map(([icon, html]) => `<li class="advice-item"><span class="advice-icon">${icon}</span><span>${html}</span></li>`)
+      .join('');
+
+    // Water
+    document.getElementById('waterVal').textContent = v.wt ? (v.wt * 35 / 1000).toFixed(2) : '2.00';
+
+    setSync('ok', `已連線 · ${new Date().toLocaleTimeString('zh-TW')}`);
+    toast(`✅ ${name} 的資料已載入`);
+
+  } catch (err) {
+    console.warn('FHIR Error (switching to Demo):', err);
+    runDemo();
+  }
 }
 
 startApp();
