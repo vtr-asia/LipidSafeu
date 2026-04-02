@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🩸 脂安通 Lipid-Safe CDS</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.6.3/build/fhir-client.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --ink: #0d1117;
+      --ink2: #1c2433;
+      --surface: #f4f6fb;
+      --white: #ffffff;
+      --border: #dde3ef;
+      --dim: #7a8899;
+      --blue: #2563eb;
+      --blue-lt: #dbeafe;
+      --teal: #0d9488;
+      --teal-lt: #ccfbf1;
+      --red: #dc2626;
+      --red-lt: #fee2e2;
+      --amber: #d97706;
+      --amber-lt: #fef3c7;
+      --green: #059669;
+      --green-lt: #d1fae5;
+      --radius: 14px;
+      --shadow: 0 2px 16px rgba(0,0,0,0.07);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
+      background: var(--surface);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── TOP NAV ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 58px;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; }
+    .nav-icon { font-size: 22px; }
+    .nav-name { font-weight: 700; font-size: 17px; color: var(--blue); letter-spacing: -0.3px; }
+    .nav-tag { font-size: 11px; background: var(--blue-lt); color: var(--blue); padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+    .nav-sync { font-size: 12px; color: var(--dim); display: flex; align-items: center; gap: 6px; }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); transition: background 0.4s; }
+    .sync-dot.ok   { background: var(--green); box-shadow: 0 0 0 3px var(--green-lt); }
+    .sync-dot.fail { background: var(--red); }
+
+    /* ── LAYOUT ── */
+    .page { max-width: 1260px; margin: 0 auto; padding: 24px 24px 60px; }
+
+    /* ── PATIENT STRIP ── */
+    .pt-strip {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 24px;
+      display: flex; align-items: center; gap: 18px;
+      margin-bottom: 24px; box-shadow: var(--shadow);
+      animation: fadeUp 0.4s ease both;
+    }
+    .pt-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0; color: white;
+    }
+    .pt-name { font-size: 19px; font-weight: 700; color: var(--ink); }
+    .pt-meta { font-size: 13px; color: var(--dim); margin-top: 1px; }
+    .pt-badge {
+      margin-left: auto; font-family: 'DM Mono', monospace;
+      font-size: 12px; color: var(--dim);
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 4px 10px; border-radius: 8px;
+    }
+
+    /* ── MAIN GRID ── */
+    .grid-main {
+      display: grid;
+      grid-template-columns: 1fr 1fr 340px;
+      gap: 20px;
+    }
+    @media (max-width: 1100px) {
+      .grid-main { grid-template-columns: 1fr 1fr; }
+      .col-right { grid-column: 1 / -1; }
+    }
+    @media (max-width: 700px) {
+      .grid-main { grid-template-columns: 1fr; }
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      box-shadow: var(--shadow);
+      animation: fadeUp 0.45s ease both;
+    }
+    .card-h {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--dim);
+      margin-bottom: 16px; display: flex; align-items: center; gap: 7px;
+    }
+    .card-h::before {
+      content: ''; display: inline-block; width: 3px; height: 12px;
+      border-radius: 2px; background: var(--blue);
+    }
+
+    /* ── METRICS GRID ── */
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .metric {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 14px;
+      transition: border-color 0.2s;
+    }
+    .metric.alert { border-color: var(--red);   background: var(--red-lt); }
+    .metric.warn  { border-color: var(--amber);  background: var(--amber-lt); }
+    .metric.ok    { border-color: var(--teal);   background: var(--teal-lt); }
+    .m-lbl { font-size: 11px; color: var(--dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .m-val { font-size: 30px; font-weight: 800; color: var(--ink); font-family: 'DM Mono', monospace; line-height: 1; }
+    .m-val.alert { color: var(--red); }
+    .m-val.warn  { color: var(--amber); }
+    .m-val.ok    { color: var(--teal); }
+    .m-unit { font-size: 11px; color: var(--dim); margin-top: 3px; }
+
+    /* ── CDS ALERT ── */
+    .cds-panel {
+      border-radius: 12px; padding: 18px 20px; margin-bottom: 18px;
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .cds-panel.cds-safe  { background: var(--green-lt); border: 1.5px solid var(--green); }
+    .cds-panel.cds-warn  { background: var(--amber-lt); border: 1.5px solid var(--amber); }
+    .cds-panel.cds-alert { background: var(--red-lt);   border: 1.5px solid var(--red); }
+    .cds-icon  { font-size: 26px; line-height: 1; flex-shrink: 0; }
+    .cds-title { font-weight: 700; font-size: 15px; margin-bottom: 3px; }
+    .cds-title.cds-safe  { color: var(--green); }
+    .cds-title.cds-warn  { color: var(--amber); }
+    .cds-title.cds-alert { color: var(--red); }
+    .cds-body  { font-size: 13px; color: var(--ink2); line-height: 1.6; }
+
+    /* ── ADVICE LIST ── */
+    .advice-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+    .advice-item {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 12px 14px; border-radius: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      font-size: 13px; line-height: 1.6;
+    }
+    .advice-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── HISTORY LIST ── */
+    .hist-list { list-style: none; display: flex; flex-direction: column; gap: 0; }
+    .hist-item {
+      padding: 11px 0; border-bottom: 1px solid var(--surface);
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .hist-item:last-child { border-bottom: none; }
+    .hist-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+    .hist-meta { font-size: 11px; color: var(--dim); display: flex; align-items: center; gap: 8px; }
+    .pill {
+      display: inline-block; padding: 1px 7px; border-radius: 20px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
+    }
+    .pill-blue  { background: var(--blue-lt);  color: var(--blue); }
+    .pill-green { background: var(--green-lt); color: var(--green); }
+    .pill-red   { background: var(--red-lt);   color: var(--red); }
+    .pill-amber { background: var(--amber-lt); color: var(--amber); }
+
+    /* ── WATER BOX ── */
+    .water-card {
+      margin-top: 16px;
+      background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+      border: 1px solid #bae6fd; border-radius: 12px;
+      padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .water-l { font-size: 13px; font-weight: 700; color: #1d4ed8; }
+    .water-l small { display: block; font-weight: 400; font-size: 11px; color: #60a5fa; margin-top: 2px; }
+    .water-num  { font-size: 36px; font-weight: 800; color: #2563eb; font-family: 'DM Mono', monospace; line-height: 1; }
+    .water-unit { font-size: 13px; font-weight: 700; color: #3b82f6; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: var(--ink); color: white; border-radius: 10px;
+      padding: 12px 18px; font-size: 13px; font-weight: 500;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      opacity: 0; transform: translateY(12px);
+      transition: all 0.3s ease; pointer-events: none; z-index: 999;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    .no-data { font-size: 12px; color: var(--dim); font-style: italic; padding: 8px 0; }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    .card:nth-child(1) { animation-delay: 0.05s; }
+    .card:nth-child(2) { animation-delay: 0.10s; }
+    .card:nth-child(3) { animation-delay: 0.15s; }
+    .card:nth-child(4) { animation-delay: 0.20s; }
+    .card:nth-child(5) { animation-delay: 0.25s; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">
+    <span class="nav-icon">🩸</span>
+    <span class="nav-name">脂安通</span>
+    <span class="nav-tag">Lipid-Safe CDS</span>
+  </div>
+  <div class="nav-sync">
+    <div class="sync-dot" id="syncDot"></div>
+    <span id="syncTxt">連線中...</span>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- PATIENT STRIP -->
+  <div class="pt-strip">
+    <div class="pt-avatar">👤</div>
+    <div>
+      <div class="pt-name" id="pName">讀取中...</div>
+      <div class="pt-meta" id="pMeta">辨識中...</div>
+    </div>
+    <div class="pt-badge" id="pId">Patient ID: —</div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="grid-main">
+
+    <!-- COL 1: 脂質指標 -->
+    <div class="card">
+      <div class="card-h">🧪 臨床脂質 &amp; 代謝指標</div>
+      <div class="metrics">
+        <div class="metric" id="mLdl">
+          <div class="m-lbl">LDL-C 壞膽固醇</div>
+          <div class="m-val" id="vLdl">—</div>
+          <div class="m-unit">mg/dL</div>
+        </div>
+        <div class="metric" id="mTg">
+          <div class="m-lbl">三酸甘油脂 TG</div>
+          <div class="m-val" id="vTg">—</div>
+          <div class="m-unit">mg/dL</div>
+        </div>
+        <div class="metric" id="mTc">
+          <div class="m-lbl">總膽固醇 TC</div>
+          <div class="m-val" id="vTc">—</div>
+          <div class="m-unit">mg/dL</div>
+        </div>
+        <div class="metric" id="mHdl">
+          <div class="m-lbl">HDL-C 好膽固醇</div>
+          <div class="m-val" id="vHdl">—</div>
+          <div class="m-unit">mg/dL</div>
+        </div>
+        <div class="metric" id="mWt">
+          <div class="m-lbl">體重</div>
+          <div class="m-val" id="vWt">—</div>
+          <div class="m-unit">kg</div>
+        </div>
+        <div class="metric" id="mWai">
+          <div class="m-lbl">腰圍</div>
+          <div class="m-val" id="vWai">—</div>
+          <div class="m-unit">cm</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 2: 診斷 + 處方 -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+      <div class="card" style="flex:1;">
+        <div class="card-h">📋 診斷紀錄 (Condition)</div>
+        <ul id="diagList" class="hist-list">
+          <li class="no-data">讀取中...</li>
+        </ul>
+      </div>
+      <div class="card" style="flex:1;">
+        <div class="card-h">💊 處方紀錄 (MedicationRequest)</div>
+        <ul id="medList" class="hist-list">
+          <li class="no-data">讀取中...</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- COL 3: CDS + 建議 -->
+    <div class="col-right" style="display:flex; flex-direction:column; gap:20px;">
+      <div class="card">
+        <div class="card-h">🚦 CDS 臨床決策評估</div>
+        <div id="cdsPanel"><p class="no-data">分析中...</p></div>
+      </div>
+      <div class="card">
+        <div class="card-h">📌 個人化管理建議</div>
+        <ul id="adviceList" class="advice-list">
+          <li class="no-data">等待資料...</li>
+        </ul>
+        <div class="water-card">
+          <div class="water-l">
+            💧 每日建議飲水量
+            <small>依體重 ×35 mL 計算</small>
+          </div>
+          <div>
+            <span class="water-num" id="waterVal">--</span>
+            <span class="water-unit"> L</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+</div><!-- /page -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── LOINC codes ──────────────────────────────────────────────────────────
+const LOINC = {
+  LDL:    "13457-7",  // LDL-C (Friedewald)
+  LDL2:   "2089-1",   // LDL-C (直接測量，備用)
+  TG:     "2571-8",
+  TC:     "2093-3",   // 總膽固醇
+  HDL:    "2085-9",
+  WEIGHT: "29463-7",
+  WAIST:  "8280-0"
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────
+function toast(msg, dur = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+function setSync(state, label) {
+  document.getElementById('syncDot').className = `sync-dot ${state}`;
+  document.getElementById('syncTxt').textContent = label;
+}
+
+function fmtDate(s) {
+  if (!s) return '日期不詳';
+  return s.split('T')[0];
+}
+
+// 從 Observation resource 安全地取值
+function obsValue(r) {
+  if (r.valueQuantity?.value != null) return r.valueQuantity.value;
+  if (r.component) {
+    const comp = r.component.find(c => c.valueQuantity?.value != null);
+    return comp?.valueQuantity?.value ?? null;
+  }
+  return null;
+}
+
+// 用 category 查詢 Observation（相容 Sandbox / MOHW FHIR Server）
+async function fetchObs(client, pid) {
+  const all = {};
+  try {
+    const [labBundle, vsBundle] = await Promise.all([
+      client.request(`Observation?patient=${pid}&category=laboratory&_sort=-date&_count=50`).catch(() => ({ entry: [] })),
+      client.request(`Observation?patient=${pid}&category=vital-signs&_sort=-date&_count=30`).catch(() => ({ entry: [] }))
+    ]);
+
+    const entries = [
+      ...(labBundle.entry || []),
+      ...(vsBundle.entry || [])
+    ];
+
+    for (const e of entries) {
+      const r = e.resource;
+      const code = r.code?.coding?.[0]?.code;
+      if (!code) continue;
+      const val = obsValue(r);
+      if (val == null) continue;
+
+      // 以最新一筆為主（_sort=-date 保證）
+      if ((code === LOINC.LDL || code === LOINC.LDL2) && !all.ldl) all.ldl = val;
+      if (code === LOINC.TG  && !all.tg)  all.tg  = val;
+      if (code === LOINC.TC  && !all.tc)  all.tc  = val;
+      if (code === LOINC.HDL && !all.hdl) all.hdl = val;
+      if (code === LOINC.WEIGHT && !all.wt)  all.wt  = Math.round(val);
+      if (code === LOINC.WAIST  && !all.wai) all.wai = val;
+    }
+  } catch (err) {
+    console.warn('Observation fetch error:', err);
+  }
+  return all;
+}
+
+// ── CDS 評估（依 2025 台灣血脂管理共識）────────────────────────────────
+function cdsEvaluate(v) {
+  if (v.tg == null && v.ldl == null && v.tc == null) {
+    return {
+      level: 'na', icon: '⚠️', title: '無血脂資料',
+      body: 'Sandbox 病人尚無實驗室 Observation，其他功能仍可瀏覽。'
+    };
+  }
+  const tg  = v.tg  ?? 0;
+  const ldl = v.ldl ?? 0;
+  const tc  = v.tc  ?? 0;
+
+  if (tg >= 500) {
+    return { level: 'alert', icon: '🚨', title: '極高風險 — 急迫處置',
+      body: `TG ${tg} mg/dL ≥ 500，急性胰臟炎風險極高。請立即評估住院與 Fibrate 療法。` };
+  }
+  if (tg >= 200 || ldl >= 160 || tc >= 240) {
+    return { level: 'warn', icon: '⚠️', title: '指標偏高 — 積極介入',
+      body: `血脂數值超標（TG ${tg} / LDL ${ldl} / TC ${tc} mg/dL），建議調整生活型態並考慮 Statin 療法。` };
+  }
+  if (ldl >= 130 || tg >= 150) {
+    return { level: 'warn', icon: '🔶', title: '邊緣偏高 — 飲食監控',
+      body: '血脂輕度偏高，請加強飲食控制並三個月後複查。' };
+  }
+  return { level: 'safe', icon: '✅', title: '血脂控制良好',
+    body: '目前血脂指標均在建議範圍內，請維持健康生活習慣。' };
+}
+
+// ── 建議清單 ─────────────────────────────────────────────────────────────
+function buildAdvice(v, gender) {
+  const items = [];
+  const waistLimit = gender === 'male' ? 90 : 80;
+
+  if ((v.tg  ?? 0) > 150)
+    items.push(['🍚', '<b>限醣限酒：</b>精製糖與酒精是 TG 上升主因，建議改用全穀、戒酒。']);
+  if ((v.ldl ?? 0) > 130)
+    items.push(['🫒', '<b>油脂選擇：</b>以橄欖油、魚油替代飽和脂肪，減少紅肉與加工食品。']);
+  if (v.wai && v.wai > waistLimit)
+    items.push(['🏃', `<b>腰圍超標：</b>腰圍 ${v.wai} cm（建議男≤90/女≤80），每日快走 30 分鐘有助減脂。`]);
+  if ((v.tc  ?? 0) >= 240)
+    items.push(['💊', '<b>Statin 評估：</b>TC ≥ 240 mg/dL，建議與醫師討論藥物治療必要性。']);
+  if (items.length === 0)
+    items.push(['🥗', '<b>維持現況：</b>繼續地中海式飲食、規律運動，每年複查血脂。']);
+  items.push(['💧', '<b>補充水分：</b>每日攝取足夠水分有助代謝。']);
+
+  return items;
+}
+
+// ── 顏色分級 ─────────────────────────────────────────────────────────────
+function ldlClass(v) { return v >= 160 ? 'alert' : v >= 130 ? 'warn' : 'ok'; }
+function tgClass(v)  { return v >= 500 ? 'alert' : v >= 150 ? 'warn' : 'ok'; }
+function tcClass(v)  { return v >= 240 ? 'warn'  : 'ok'; }
+function hdlClass(v, g) { return v < (g === 'male' ? 40 : 50) ? 'warn' : 'ok'; }
+
+function setMetric(id, valId, val, cls) {
+  if (val == null) return;
+  const el  = document.getElementById(id);
+  const vel = document.getElementById(valId);
+  vel.textContent = val;
+  vel.className   = `m-val ${cls}`;
+  el.className    = `metric ${cls}`;
+}
+
+// ── MAIN ─────────────────────────────────────────────────────────────────
+async function startApp() {
+  try {
+    const client = await FHIR.oauth2.ready();
+
+    // ✅ 修復1：相容舊版與新版 fhirclient
+    //    getPatientId() 在部分版本不存在，優先使用 client.patient.id
+    const pid = (typeof client.getPatientId === 'function')
+      ? client.getPatientId()
+      : client.patient?.id;
+
+    if (!pid) throw new Error('launch context 未包含 patient ID，請確認 launch scope 已包含 patient/*.read');
+
+    setSync('', '載入病人資料...');
+
+    // ── 並行請求所有資源 ──────────────────────────────────────────────
+    const [patient, v, condBundle, medBundle] = await Promise.all([
+      client.request(`Patient/${pid}`),
+      fetchObs(client, pid),
+      client.request(`Condition?patient=${pid}&_sort=-recorded-date&_count=20`).catch(() => ({ entry: [] })),
+      client.request(`MedicationRequest?patient=${pid}&_sort=-authoredon&_count=20`).catch(() => ({ entry: [] }))
+    ]);
+
+    // ── 1. 病人基本資料 ──────────────────────────────────────────────
+    const nameObj = patient.name?.[0] || {};
+    const name    = nameObj.text
+      || [...(nameObj.given || []), nameObj.family].filter(Boolean).join(' ')
+      || '未知';
+    const age    = patient.birthDate
+      ? Math.floor((Date.now() - new Date(patient.birthDate)) / 31_557_600_000)
+      : '—';
+    const gender = patient.gender || 'unknown';
+    const gTxt   = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '不詳';
+
+    document.getElementById('pName').textContent = name;
+    document.getElementById('pMeta').textContent = `${gTxt} / ${age} 歲 | ${patient.birthDate || '生日未知'}`;
+    document.getElementById('pId').textContent   = `Patient ID: ${pid}`;
+
+    // ── 2. 指標上色 ─────────────────────────────────────────────────
+    setMetric('mLdl', 'vLdl', v.ldl, ldlClass(v.ldl ?? 0));
+    setMetric('mTg',  'vTg',  v.tg,  tgClass(v.tg  ?? 0));
+    setMetric('mTc',  'vTc',  v.tc,  tcClass(v.tc  ?? 0));
+    setMetric('mHdl', 'vHdl', v.hdl, hdlClass(v.hdl ?? 99, gender));
+    setMetric('mWt',  'vWt',  v.wt,  'ok');
+    setMetric('mWai', 'vWai', v.wai, 'ok');
+
+    // ── 3. 診斷紀錄 ─────────────────────────────────────────────────
+    const diagList = document.getElementById('diagList');
+    const conds    = (condBundle.entry || []).map(e => e.resource);
+    if (conds.length > 0) {
+      diagList.innerHTML = conds.map(r => {
+        const label  = r.code?.text || r.code?.coding?.[0]?.display || r.code?.coding?.[0]?.code || '未知診斷';
+        const date   = fmtDate(r.recordedDate || r.onsetDateTime);
+        const status = r.clinicalStatus?.coding?.[0]?.code || 'unknown';
+        const pillCls = status === 'active' ? 'pill-red' : 'pill-blue';
+        const pillTxt = status === 'active' ? '活動中' : status;
+        return `<li class="hist-item">
+          <div class="hist-name">${label}</div>
+          <div class="hist-meta">
+            <span class="pill ${pillCls}">${pillTxt}</span>${date}
+          </div>
+        </li>`;
+      }).join('');
+    } else {
+      diagList.innerHTML = '<li class="no-data">無診斷紀錄</li>';
+    }
+
+    // ── 4. 處方紀錄 ─────────────────────────────────────────────────
+    const medList = document.getElementById('medList');
+    const meds    = (medBundle.entry || []).map(e => e.resource);
+    if (meds.length > 0) {
+      medList.innerHTML = meds.map(r => {
+        let medName = '未知藥物';
+        if (r.medicationCodeableConcept) {
+          medName = r.medicationCodeableConcept.text
+            || r.medicationCodeableConcept.coding?.[0]?.display
+            || medName;
+        } else if (r.medicationReference?.display) {
+          medName = r.medicationReference.display;
+        }
+        const date    = fmtDate(r.authoredOn);
+        const status  = r.status || 'unknown';
+        const pillCls = status === 'active' ? 'pill-green' : status === 'stopped' ? 'pill-red' : 'pill-amber';
+        const pillTxt = { active:'服用中', stopped:'已停藥', completed:'完成', cancelled:'取消' }[status] || status;
+        return `<li class="hist-item">
+          <div class="hist-name">${medName}</div>
+          <div class="hist-meta">
+            <span class="pill ${pillCls}">${pillTxt}</span>${date}
+          </div>
+        </li>`;
+      }).join('');
+    } else {
+      medList.innerHTML = '<li class="no-data">無處方紀錄</li>';
+    }
+
+    // ── 5. CDS 評估面板 ─────────────────────────────────────────────
+    const cds    = cdsEvaluate(v);
+    const cssMap = { safe:'cds-safe', warn:'cds-warn', alert:'cds-alert', na:'cds-warn' };
+    document.getElementById('cdsPanel').innerHTML = `
+      <div class="cds-panel ${cssMap[cds.level] || 'cds-warn'}">
+        <div class="cds-icon">${cds.icon}</div>
+        <div>
+          <div class="cds-title ${cssMap[cds.level] || 'cds-warn'}">${cds.title}</div>
+          <div class="cds-body">${cds.body}</div>
+        </div>
+      </div>`;
+
+    // ── 6. 建議清單 ─────────────────────────────────────────────────
+    const advices = buildAdvice(v, gender);
+    document.getElementById('adviceList').innerHTML = advices
+      .map(([icon, html]) => `<li class="advice-item"><span class="advice-icon">${icon}</span><span>${html}</span></li>`)
+      .join('');
+
+    // ── 7. 飲水建議 ─────────────────────────────────────────────────
+    // ✅ 修復2：使用明確的乘法運算符，避免跳脫字元問題
+    const waterL = v.wt ? (v.wt * 35 / 1000).toFixed(1) : '2.0';
+    document.getElementById('waterVal').textContent = waterL;
+
+    // ── 完成 ────────────────────────────────────────────────────────
+    setSync('ok', `已連線 · ${new Date().toLocaleTimeString('zh-TW')}`);
+    toast(`✅ ${name} 的資料已載入`);
+
+  } catch (err) {
+    console.error('FHIR Error:', err);
+    setSync('fail', '連線失敗');
+
+    // Demo 模式：顯示靜態提示讓畫面不空白
+    document.getElementById('pName').textContent = 'Demo 模式（未連線）';
+    document.getElementById('pMeta').textContent = '請從 launch.smarthealthit.org 啟動';
+    document.getElementById('cdsPanel').innerHTML = `
+      <div class="cds-panel cds-warn">
+        <div class="cds-icon">⚠️</div>
+        <div>
+          <div class="cds-title cds-warn">未透過 SMART Launcher 啟動</div>
+          <div class="cds-body">
+            請前往 <b>launch.smarthealthit.org</b>，選擇 EHR Launch<br>
+            → 選病人 → App Launch URL 填入 <code>launch.html</code> 的完整網址後啟動。<br><br>
+            錯誤：<code style="font-size:12px;">${err.message || err}</code>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('adviceList').innerHTML = '<li class="no-data">無法載入建議（未連線）</li>';
+    toast('⚠️ FHIR 授權失敗，顯示 Demo 畫面');
+  }
+}
+
+startApp();
+</script>
+</body>
+</html>

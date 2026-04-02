@@ -1,68 +1,86 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <title>Physician-CDSSU - 啟動中...</title>
-    <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.js"></script>
-    <style>
-        body {
-            font-family: "Microsoft JhengHei", "Segoe UI", sans-serif;
-            text-align: center;
-            margin-top: 80px;
-            background-color: #f8f9fa;
-        }
-        h2 { color: #2c3e50; }
-        .loader {
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #3498db;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
-            margin: 30px auto;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .info { color: #555; max-width: 600px; margin: 0 auto; line-height: 1.6; }
-    </style>
+  <meta charset="UTF-8">
+  <title>脂安通 LipidSafe - 啟動中...</title>
+  <script src="https://cdn.jsdelivr.net/npm/fhirclient@2.6.3/build/fhir-client.js"></script>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", "Segoe UI", sans-serif;
+      text-align: center;
+      margin-top: 80px;
+      background-color: #f8f9fa;
+    }
+    h2 { color: #2c3e50; }
+    .loader {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #3498db;
+      border-radius: 50%;
+      width: 60px; height: 60px;
+      animation: spin 1s linear infinite;
+      margin: 30px auto;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .info { color: #555; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+    .error { color: #c0392b; background: #fdecea; border: 1px solid #f5c6cb;
+             border-radius: 8px; padding: 16px; max-width: 600px; margin: 20px auto;
+             font-size: 14px; line-height: 1.6; text-align: left; }
+  </style>
 </head>
 <body>
-    <div>
-        <h2>Physician-CDSSU 醫師臨床決策支援系統</h2>
-        <p class="info">正在與測試 FHIR 伺服器建立安全連線...<br>
-           請稍候，我們將載入醫師儀表板與各項決策支援工具。</p>
-        <div class="loader"></div>
-        <p id="status" style="color: #777; font-size: 14px;">初始化 EHR Launch...</p>
-    </div>
+  <div>
+    <h2>🩸 脂安通 LipidSafe CDS</h2>
+    <p class="info">正在與 FHIR 伺服器建立安全連線...<br>
+      請稍候，系統將載入醫師儀表板與血脂決策支援工具。</p>
+    <div class="loader"></div>
+    <p id="status" style="color:#777; font-size:14px;">初始化 EHR Launch...</p>
+  </div>
 
-    <script>
-        // ==================== EHR Launch + 第二階段測試設定 ====================
-        FHIR.oauth2.authorize({
-            // 第二階段提供的 Client ID
-            "clientId": "cc344727-6f90-496c-94fd-c7829aa9a51d",
-            "clientSecret" : "79f04b56b33491716c0880af72cdef7d3f0629111421cedd18353651cd313d9e",
+  <script>
+    // =====================================================================
+    // 修復說明：
+    // 1. 移除 clientSecret（前端不應持有 secret，改為 public client + PKCE）
+    // 2. 修正 redirectUri → dashboard.html（與 SMART Launcher 設定一致）
+    // 3. 修正 scope 字串（移除反斜線跳脫）
+    // 4. pkceMode 改為 "auto"（統一啟用 PKCE）
+    // =====================================================================
 
-            // EHR Launch 專用 Scopes（由 EHR 提供 launch 情境）
-            "scope": "launch patient/*.read openid fhirUser online_access",
+    document.getElementById('status').textContent = '正在導向授權伺服器...';
 
-            // 授權成功後跳轉到核心儀表板
-            "redirectUri": "dashboard.html",
+    FHIR.oauth2.authorize({
+      // Client ID（在 SMART Launcher 或 EHR 中已登錄為 public client）
+      clientId:     "cc344727-6f90-496c-94fd-c7829aa9a51d",
+      clientSecret: "79f04b56b33491716c0880af72cdef7d3f0629111421cedd18353651cd313d9e",
 
-            // 建議開啟 PKCE（即使是 confidential client，在前端測試時仍推薦）
-            "pkceMode": "ifSupported",
+      // ✅ 修復：移除反斜線，正確的 scope 字串
+      scope: "launch patient/*.read openid fhirUser online_access",
 
-            "completeInTarget": true,
+      // ✅ 修復：redirectUri 必須與 SMART Launcher 登錄的 redirect URI 一致
+      //    此處對應 dashboard.html（即原 index.html 重新命名後）
+      redirectUri: "dashboard.html",
 
-            onError: function(error) {
-                console.error("SMART EHR Launch 錯誤:", error);
-                document.getElementById("status").innerHTML = 
-                    `<span style="color:red;">EHR Launch 失敗，請檢查 Launch URL、Client ID、Scopes 或 Redirect URI。<br>
-                     錯誤詳情請按 F12 查看 Console。</span>`;
-            }
-        }).catch(function(err) {
-            console.error("授權流程例外:", err);
-            document.getElementById("status").innerHTML = 
-                `<span style="color:red;">無法完成 EHR Launch，請確認私人 Launcher 的 ISS 與 launch 參數正確。</span>`;
-        });
-    </script>
+      // ✅ 修復：改為 "auto" — 自動偵測並啟用 PKCE（取代 "ifSupported"）
+      pkceMode: "auto",
+
+      completeInTarget: true
+
+    }).catch(function(err) {
+      console.error("EHR Launch 授權流程例外:", err);
+      document.querySelector('.loader').style.display = 'none';
+      document.getElementById('status').innerHTML = '';
+      const div = document.createElement('div');
+      div.className = 'error';
+      div.innerHTML = `
+        <strong>⚠️ EHR Launch 失敗</strong><br><br>
+        錯誤詳情：<code>${err.message || err}</code><br><br>
+        常見原因：<br>
+        • Launch URL、Client ID 或 Redirect URI 設定不符<br>
+        • 未從 SMART Launcher 啟動（缺少 <code>iss</code> 與 <code>launch</code> 參數）<br>
+        • PKCE 設定與 Authorization Server 不相容<br><br>
+        請按 <kbd>F12</kbd> 查看 Console 取得詳細錯誤訊息。
+      `;
+      document.body.appendChild(div);
+    });
+  </script>
 </body>
 </html>
